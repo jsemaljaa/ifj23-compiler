@@ -2,20 +2,17 @@
  * str.h
  *
  * @brief Declaration of data structure and functions to work with dynamic string
+ * @author Alina Vinogradova <xvinog00@vutbr.cz>
  */
-
-
-//
-// Created by Alina Vinogradova on 10/2/2023.
-//
 
 #ifndef PROJ_STR_H
 #define PROJ_STR_H
 
+
 typedef struct string {
     int len;            // length of the string
     int allocated;      // allocated size
-    char *str;          // string itself
+    char *s;            // string itself
 } string_t;
 
 /**
