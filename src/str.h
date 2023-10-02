@@ -8,6 +8,7 @@
 #ifndef PROJ_STR_H
 #define PROJ_STR_H
 
+#include <stdbool.h>
 
 typedef struct string {
     int len;            // length of the string
@@ -73,5 +74,12 @@ int str_cmp_const(string_t *s1, const char *s2);
  */
 void str_free(string_t *str);
 
+/**
+ * Reallocate given string with the size len
+ * @param str Pointer to a string
+ * @param len Size to reallocate
+ * @return True if success, False otherwise
+ */
+bool str_realloc(string_t *str, const int len);
 
 #endif //PROJ_STR_H
