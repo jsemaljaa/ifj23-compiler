@@ -46,7 +46,7 @@ typedef enum {
     TYPE_GE,            // >=
     TYPE_LT,            // <
     TYPE_LE,            // <=
-    TYPE_NEQ            // !=
+    TYPE_NEQ,           // !=
     TYPE_EQ,            // ==
     TYPE_ASSIGN,        // =
     TYPE_EXCL,          // !
