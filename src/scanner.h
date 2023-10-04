@@ -1,5 +1,5 @@
 /*
- * compiler.c
+ * scanner.h
  *
  * @brief Declaration of data structures and functions for lexical analysis
  * @author Alina Vinogradova <xvinog00@vutbr.cz>
@@ -8,9 +8,16 @@
 #ifndef PROJ_SCANNER_H
 #define PROJ_SCANNER_H
 
+
+
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <ctype.h>
 #include "str.h"
+#include "error.h"
+
+#include "dbg.h"
 
 typedef enum {
     K_DOUBLE,
@@ -25,6 +32,22 @@ typedef enum {
     K_VAR,
     K_WHILE
 } keyword_t;
+
+const char *keywords[] = {
+        "Double",
+        "else",
+        "func",
+        "if",
+        "Int",
+        "let",
+        "nil",
+        "return",
+        "String",
+        "var",
+        "while"
+};
+
+#define N_KEYWORDS 10
 
 typedef enum {
     TYPE_EOF,           // End of file
@@ -51,12 +74,42 @@ typedef enum {
     TYPE_ASSIGN,        // =
     TYPE_EXCL,          // !
     TYPE_QUES,          // ?
+    TYPE_NILCOAL,       // ??
     TYPE_INT,           // Int
     TYPE_DOUBLE,        // Double
     TYPE_STRING,        // String
-    TOKEN_ID,           // identifier
-    TOKEN_KW            // keyword
+    TYPE_ID,            // identifier
+    TYPE_KW,            // keyword
+
+    TYPE_DBG            // debug
 } token_type_t;
+
+typedef enum {
+    STATE_START = 100,
+    STATE_COMM_BLOCK_START,
+    STATE_COMM_BLOCK_END,
+    STATE_COMM_LINE,
+    STATE_MINUS,
+    STATE_QUES,
+    STATE_UNDERSCORE,
+    STATE_ID_KW,
+    STATE_STRING_START,
+    STATE_STRING_END,
+    STATE_STRING_MULTILINE,
+    STATE_STRING_ESCAPE,
+    STATE_STRING_SEQ,
+    STATE_STRING_SEQ_HEX,
+    STATE_NUMBER_INTEGER,
+    STATE_NUMBER_DOUBLE_START,
+    STATE_NUMBER_DOUBLE_END,
+    STATE_NUMBER_EXP_START,
+    STATE_NUMBER_EXP_SIGN,
+    STATE_NUMBER_EXP_END,
+    STATE_DIV,
+    STATE_GREATER,
+    STATE_LESS,
+    STATE_EXCL
+} states_t;
 
 typedef union token_attribute {
     string_t id;
@@ -70,25 +123,11 @@ typedef struct token {
     token_attribute_t attribute;
 } token_t;
 
-#define STATE_START 100
-#define STATE_COMM_BLOCK_START 101
-#define STATE_COMM_BLOCK_END 102
-#define STATE_COMM_LINE 103
-#define STATE_QUES 104
-#define STATE_UNDERSCORE 105
-#define STATE_ID 106
-#define STATE_STRING_START 107
-#define STATE_STRING_END 108
-#define STATE_STRING_MULTILINE 109
-#define STATE_STRING_ESCAPE 110
-#define STATE_STRING_SEQ 111
-#define STATE_STRING_SEQ_HEX 112
-#define STATE_NUMBER_INTEGER 113
-#define STATE_NUMBER_DOUBLE_START 114
-#define STATE_NUMBER_DOUBLE_END 115
-#define STATE_NUMBER_EXP_START 116
-#define STATE_NUMBER_EXP_SIGN 117
-#define STATE_NUMBER_EXP_END 118
-
+/**
+ *
+ * @param token
+ * @return
+ */
+int get_token(token_t *token);
 
 #endif //PROJ_SCANNER_H

@@ -9,6 +9,10 @@
 #define PROJ_STR_H
 
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "dbg.h"
 
 typedef struct string {
     int len;            // length of the string
@@ -47,6 +51,13 @@ bool str_copy(string_t *src, string_t *dst);
  * @return True if success, False otherwise
  */
 bool str_concat(string_t *s1, string_t *s2);
+
+/**
+ * Clear string
+ * @param str Pointer to a string
+ * @return True if success, False otherwise
+ */
+bool str_clear(string_t *str);
 
 /**
  * Compare two strings

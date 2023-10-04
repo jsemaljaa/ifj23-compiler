@@ -8,6 +8,9 @@
 #ifndef PROJ_ERROR_H
 #define PROJ_ERROR_H
 
+
+#define NO_ERRORS 0
+
 /*
  * chyba v programu v rámci lexikální analýzy (chybná struktura aktuálního lexému)
  */
