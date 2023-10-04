@@ -17,48 +17,67 @@ void match_keyword(token_t *token) {
     }
 }
 
+states_t process_char(token_t *token, char c) {
+    states_t state = STATE_START;
+    if (c == EOF) {
+        token->type = TYPE_EOF;
+    } else if (c == '\n') {
+        token->type = TYPE_EOL;
+    } else if (c == ':') {
+        token->type = TYPE_COLON;
+    } else if (c == '.') {
+        token->type = TYPE_DOT;
+    } else if (c == ',') {
+        token->type = TYPE_COMMA;
+    } else if (c == '_') {
+        state = STATE_UNDERSCORE;
+    } else if (c == '{') {
+        token->type = TYPE_LBRACKET;
+    } else if (c == '}') {
+        token->type = TYPE_RBRACKET;
+    } else if (c == '(') {
+        token->type = TYPE_LPAR;
+    } else if (c == ')') {
+        token->type = TYPE_RPAR;
+    } else if (c == '*') {
+        token->type = TYPE_MUL;
+    } else if (c == '/') {
+        state = STATE_DIV;
+    } else if (c == '-') {
+        state = STATE_MINUS;
+    } else if (c == '+') {
+        token->type = TYPE_PLUS;
+    } else if (c == '>') {
+        state = STATE_GREATER;
+    } else if (c == '<') {
+        state = STATE_LESS;
+    } else if (c == '!') {
+        state = STATE_EXCL;
+    } else if (c == '?') {
+        state = STATE_QUES;
+    } else if (isupper(c) || islower(c)) {
+        str_append(&token->attribute.id, c);
+        state = STATE_ID_KW;
+    } else if (isspace(c)){
+        state = STATE_START;
+    }
+    return state;
+}
+
 int get_token(token_t *token){
-    int ret = NO_ERRORS;
     str_clear(&token->attribute.id);
 
     states_t state = STATE_START;
     char c;
 
-    while (true) {
+    while (1) {
         c = getc(stdin);
 
         switch (state) {
+
             case STATE_START:
-                switch (c) {
-                    case EOF: token->type = TYPE_EOF;
-                    case '\n': token->type = TYPE_EOL;
-                    case ':': token->type = TYPE_COLON;
-                    case '.': token->type = TYPE_DOT;
-                    case ',': token->type = TYPE_COMMA;
-                    case '_': state = STATE_UNDERSCORE;
-                    case '{': token->type = TYPE_LBRACKET;
-                    case '}': token->type = TYPE_RBRACKET;
-                    case '(': token->type = TYPE_LPAR;
-                    case ')': token->type = TYPE_RPAR;
-                    case '*': token->type = TYPE_MUL;
-                    case '/': state = STATE_DIV;
-                    case '-': state = STATE_MINUS;
-                    case '+': token->type = TYPE_PLUS;
-                    case '>': state = STATE_GREATER;
-                    case '<': state = STATE_LESS;
-                    case '!': state = STATE_EXCL;
-                    case '?': state = STATE_QUES;
-
-
-                    default:
-                        if (isupper(c) || islower(c)) {
-                            str_append(&token->attribute.id, c);
-                            state = STATE_ID_KW;
-                        }
-
-                        if (isspace(c))
-                            state = STATE_START;
-                }
+                state = process_char(token, c);
+                break;
 
             case STATE_UNDERSCORE:
                 str_append(&token->attribute.id, c);
@@ -72,7 +91,7 @@ int get_token(token_t *token){
                     ungetc(c, stdin);
                     token->type = TYPE_UNDERSCORE;
                 }
-
+                break;
 
             case STATE_MINUS:
                 c = getc(stdin);
@@ -82,10 +101,7 @@ int get_token(token_t *token){
                     ungetc(c, stdin);
                     token->type = TYPE_UNDERSCORE;
                 }
-
-            case STATE_COMM_BLOCK_START:
-            case STATE_COMM_LINE:
-                token->type = TYPE_DBG;
+                break;
 
             case STATE_DIV:
                 c = getc(stdin);
@@ -96,12 +112,12 @@ int get_token(token_t *token){
                     state = STATE_COMM_LINE;
                     break;
                 } else if (c == EOF || c == '\n') {
-                    ret = LEXICAL_ERROR;
-                    return ret;
+                    return LEXICAL_ERROR;
                 } else {
                     ungetc(c, stdin);
                     token->type = TYPE_DIV;
                 }
+                break;
 
             case STATE_GREATER:
                 c = getc(stdin);
@@ -111,6 +127,7 @@ int get_token(token_t *token){
                     ungetc(c, stdin);
                     token->type = TYPE_GT;
                 }
+                break;
 
             case STATE_LESS:
                 c = getc(stdin);
@@ -120,6 +137,7 @@ int get_token(token_t *token){
                     ungetc(c, stdin);
                     token->type = TYPE_LT;
                 }
+                break;
 
             case STATE_EXCL:
                 c = getc(stdin);
@@ -129,6 +147,7 @@ int get_token(token_t *token){
                     ungetc(c, stdin);
                     token->type = TYPE_EXCL;
                 }
+                break;
 
             case STATE_QUES:
                 c = getc(stdin);
@@ -138,22 +157,25 @@ int get_token(token_t *token){
                     ungetc(c, stdin);
                     token->type = TYPE_QUES;
                 }
-
-            case STATE_COMM_BLOCK_END:
                 break;
+
             case STATE_ID_KW:
-                bool scanid = true;
+                int scanid = 1;
                 while (scanid) {
                     c = getc(stdin);
                     if (c == '_' || isupper(c) || islower(c) || isdigit(c)) {
                         str_append(&token->attribute.id, c);
                     } else {
-                        scanid = false;
+                        scanid = 0;
                         ungetc(c, stdin);
                     }
                 }
                 match_keyword(token);
+                break;
+
             case STATE_STRING_START:
+                break;
+            case STATE_COMM_BLOCK_END:
                 break;
             case STATE_STRING_END:
                 break;
@@ -177,8 +199,13 @@ int get_token(token_t *token){
                 break;
             case STATE_NUMBER_EXP_END:
                 break;
+            case STATE_COMM_BLOCK_START:
+                break;
+            case STATE_COMM_LINE:
+                break;
         }
+
     }
 
-    return ret;
+    return NO_ERRORS;
 }
