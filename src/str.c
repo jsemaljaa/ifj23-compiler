@@ -103,11 +103,3 @@ bool str_realloc(string_t *str, const int len){
     return true;
 }
 
-bool str_contains_char_at(string_t *str, char c, int pos){
-    if (str == NULL || str->s == NULL || pos > len) {
-        return false;
-    }
-
-    return str->s[pos] == c;
-}
-

@@ -5,8 +5,6 @@
  * @author Alina Vinogradova <xvinog00@vutbr.cz>
  */
 
-#include <stdio.h>
-#include "str.h"
 #include "scanner.h"
 
 int main(int argc, const char **argv){

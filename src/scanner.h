@@ -17,7 +17,7 @@
 #include "str.h"
 #include "error.h"
 
-#include "dbg.h"
+//#include "dbg.h"
 
 typedef enum {
     K_DOUBLE,
@@ -33,7 +33,7 @@ typedef enum {
     K_WHILE
 } keyword_t;
 
-const char *keywords[] = {
+const char *kws[] = {
         "Double",
         "else",
         "func",
@@ -46,8 +46,6 @@ const char *keywords[] = {
         "var",
         "while"
 };
-
-#define N_KEYWORDS 10
 
 typedef enum {
     TYPE_EOF,           // End of file
@@ -80,7 +78,6 @@ typedef enum {
     TYPE_STRING,        // String
     TYPE_ID,            // identifier
     TYPE_KW,            // keyword
-
     TYPE_DBG            // debug
 } token_type_t;
 

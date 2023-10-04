@@ -9,7 +9,7 @@
 
 void match_keyword(token_t *token) {
     for (keyword_t i = K_DOUBLE; i < K_WHILE; i++) {
-        if (str_cmp_const(&token->attribute.id, keywords[i])) {
+        if (str_cmp_const(&token->attribute.id, kws[i])) {
             token->attribute.keyword = i;
             token->type = TYPE_KW;
             str_clear(&token->attribute.id);
@@ -50,12 +50,14 @@ int get_token(token_t *token){
                     case '?': state = STATE_QUES;
 
 
-                    case isupper(c):
-                    case islower(c):
-                        str_append(&token->attribute.id, c);
-                        state = STATE_ID_KW;
-                    case isspace(c):
-                        state = STATE_START;
+                    default:
+                        if (isupper(c) || islower(c)) {
+                            str_append(&token->attribute.id, c);
+                            state = STATE_ID_KW;
+                        }
+
+                        if (isspace(c))
+                            state = STATE_START;
                 }
 
             case STATE_UNDERSCORE:
@@ -68,7 +70,7 @@ int get_token(token_t *token){
                     // should probably add here
                     str_clear(&token->attribute.id);
                     ungetc(c, stdin);
-                    token->type = TOKEN_UNDERSCORE;
+                    token->type = TYPE_UNDERSCORE;
                 }
 
 
@@ -136,7 +138,7 @@ int get_token(token_t *token){
                     ungetc(c, stdin);
                     token->type = TYPE_QUES;
                 }
-            return ret;
+
             case STATE_COMM_BLOCK_END:
                 break;
             case STATE_ID_KW:
