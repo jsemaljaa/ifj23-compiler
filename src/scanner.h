@@ -8,14 +8,12 @@
 #ifndef PROJ_SCANNER_H
 #define PROJ_SCANNER_H
 
-
+#include "str.h"
+#include "error.h"
 
 #include <stdio.h>
 #include <stdint.h>
-#include <stdlib.h>
 #include <ctype.h>
-#include "str.h"
-#include "error.h"
 
 //#include "dbg.h"
 
@@ -33,19 +31,7 @@ typedef enum {
     K_WHILE
 } keyword_t;
 
-const char *kws[] = {
-        "Double",
-        "else",
-        "func",
-        "if",
-        "Int",
-        "let",
-        "nil",
-        "return",
-        "String",
-        "var",
-        "while"
-};
+
 
 typedef enum {
     TYPE_EOF,           // End of file
@@ -110,6 +96,7 @@ typedef enum {
 
 typedef union token_attribute {
     string_t id;
+    string_t string;
     int integerNumber;
     double floatNumber;
     keyword_t keyword;

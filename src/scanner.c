@@ -7,14 +7,34 @@
 
 #include "scanner.h"
 
-void match_keyword(token_t *token) {
+// Counter for hex in \u escape sequence
+int hexCnt = 0;
+bool comment = false;
+
+bool match_keyword(token_t *token) {
+    static const char *keywords[] = {
+            "Double",
+            "else",
+            "func",
+            "if",
+            "Int",
+            "let",
+            "nil",
+            "return",
+            "String",
+            "var",
+            "while"
+    };
     for (keyword_t i = K_DOUBLE; i < K_WHILE; i++) {
-        if (str_cmp_const(&token->attribute.id, kws[i])) {
+        if (str_cmp_const(&token->attribute.id, keywords[i])) {
             token->attribute.keyword = i;
             token->type = TYPE_KW;
             str_clear(&token->attribute.id);
+            return true;
         }
     }
+
+    return false;
 }
 
 states_t process_char(token_t *token, char c) {
@@ -56,10 +76,17 @@ states_t process_char(token_t *token, char c) {
     } else if (c == '?') {
         state = STATE_QUES;
     } else if (isupper(c) || islower(c)) {
+        // check for other error 99
         str_append(&token->attribute.id, c);
         state = STATE_ID_KW;
+    } else if (c == '"') {
+        state = STATE_STRING_START;
     } else if (isspace(c)){
         state = STATE_START;
+    } else if (isdigit(c)) {
+        // check for other error 99
+        str_append(&token->attribute.id, c);
+        state = STATE_NUMBER_INTEGER;
     }
     return state;
 }
@@ -85,23 +112,25 @@ int get_token(token_t *token){
                 if (isupper(c) || islower(c) || isdigit(c)) {
                     str_append(&token->attribute.id, c);
                     state = STATE_ID_KW;
+                    break;
                 } else {
                     // should probably add here
                     str_clear(&token->attribute.id);
                     ungetc(c, stdin);
                     token->type = TYPE_UNDERSCORE;
+                    return NO_ERRORS;
                 }
-                break;
 
             case STATE_MINUS:
                 c = getc(stdin);
                 if (c == '>') {
                     token->type = TYPE_ARROW;
+                    return NO_ERRORS;
                 } else {
                     ungetc(c, stdin);
-                    token->type = TYPE_UNDERSCORE;
+                    token->type = TYPE_MINUS;
+                    return NO_ERRORS;
                 }
-                break;
 
             case STATE_DIV:
                 c = getc(stdin);
@@ -116,78 +145,154 @@ int get_token(token_t *token){
                 } else {
                     ungetc(c, stdin);
                     token->type = TYPE_DIV;
+                    return NO_ERRORS;
                 }
-                break;
 
             case STATE_GREATER:
                 c = getc(stdin);
                 if (c == '=') {
                     token->type = TYPE_GE;
+                    return NO_ERRORS;
                 } else {
                     ungetc(c, stdin);
                     token->type = TYPE_GT;
+                    return NO_ERRORS;
                 }
-                break;
 
             case STATE_LESS:
                 c = getc(stdin);
                 if (c == '=') {
                     token->type = TYPE_LE;
+                    return NO_ERRORS;
                 } else {
                     ungetc(c, stdin);
                     token->type = TYPE_LT;
+                    return NO_ERRORS;
                 }
-                break;
 
             case STATE_EXCL:
                 c = getc(stdin);
                 if (c == '=') {
                     token->type = TYPE_NEQ;
+                    return NO_ERRORS;
                 } else {
                     ungetc(c, stdin);
                     token->type = TYPE_EXCL;
+                    return NO_ERRORS;
                 }
-                break;
 
             case STATE_QUES:
                 c = getc(stdin);
                 if (c == '?') {
                     token->type = TYPE_NILCOAL;
+                    return NO_ERRORS;
                 } else {
                     ungetc(c, stdin);
                     token->type = TYPE_QUES;
+                    return NO_ERRORS;
                 }
-                break;
 
             case STATE_ID_KW:
-                int scanid = 1;
-                while (scanid) {
-                    c = getc(stdin);
-                    if (c == '_' || isupper(c) || islower(c) || isdigit(c)) {
-                        str_append(&token->attribute.id, c);
-                    } else {
-                        scanid = 0;
-                        ungetc(c, stdin);
+                if (c == '_' || isupper(c) || islower(c) || isdigit(c)) {
+                    if (!str_append(&token->attribute.id, c)) {
+                        return OTHER_ERROR;
                     }
+                } else {
+                    if (!match_keyword(token)) {
+                        token->type = TYPE_ID;
+                    }
+                    return NO_ERRORS;
                 }
-                match_keyword(token);
                 break;
 
             case STATE_STRING_START:
-                break;
-            case STATE_COMM_BLOCK_END:
-                break;
+                if (c == '"') {
+                    state = STATE_STRING_END;
+                    break;
+                } else if (c == '\\') {
+                    if (!str_append(&token->attribute.string, c)) {
+                        return OTHER_ERROR;
+                    }
+                    state = STATE_STRING_ESCAPE;
+                    break;
+                } else if (c == EOF || c < 32) {
+                    return LEXICAL_ERROR;
+                } else {
+                    if (!str_append(&token->attribute.string, c)) {
+                       return OTHER_ERROR;
+                    }
+                }
+
             case STATE_STRING_END:
-                break;
-            case STATE_STRING_MULTILINE:
-                break;
+                if (c == '"') {
+                    state = STATE_STRING_MULTILINE;
+                    break;
+                } else {
+                    token->type = TYPE_STRING;
+                    return NO_ERRORS;
+                }
+
             case STATE_STRING_ESCAPE:
-                break;
+                if (c == '"' || c == 'n' || c == 'r' || c == 't' || c == '\\') {
+                    if (!str_append(&token->attribute.string, c)) {
+                        return OTHER_ERROR;
+                    }
+                    state = STATE_STRING_START;
+                    break;
+                } else if (c == 'u') {
+                    if (!str_append(&token->attribute.string, c)) {
+                        return OTHER_ERROR;
+                    }
+                    state = STATE_STRING_SEQ;
+                    break;
+                }
+
             case STATE_STRING_SEQ:
+                if (c == '{') {
+                    if (!str_append(&token->attribute.string, c)) {
+                        return OTHER_ERROR;
+                    }
+                    state = STATE_STRING_SEQ_HEX;
+                }
                 break;
             case STATE_STRING_SEQ_HEX:
+                if (c == '}') {
+                    if (hexCnt == 0) {
+                        return LEXICAL_ERROR;
+                    }
+                    if (!str_append(&token->attribute.string, c)) {
+                        return OTHER_ERROR;
+                    }
+                    hexCnt = 0;
+                    state = STATE_STRING_START;
+                } else if ((c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f') || (c >= '0' && c <= '9')) {
+                    if (hexCnt > 8) {
+                        return LEXICAL_ERROR;
+                    }
+
+                    if (!str_append(&token->attribute.string, c)) {
+                        return OTHER_ERROR;
+                    }
+                    hexCnt++;
+                    // counter so max 8 symbols are appended to the string
+                }
                 break;
+
+            case STATE_COMM_BLOCK_END:
+                break;
+
+            case STATE_STRING_MULTILINE:
+                break;
+
+
             case STATE_NUMBER_INTEGER:
+                if (c == 'e' || c == 'E') {
+                    state = STATE_NUMBER_EXP_START;
+                } else if (c == '.') {
+                    state = STATE_NUMBER_DOUBLE_START;
+                } else if (!isdigit(c)) {
+                    // 
+                }
                 break;
             case STATE_NUMBER_DOUBLE_START:
                 break;
