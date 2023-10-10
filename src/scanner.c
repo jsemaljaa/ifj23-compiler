@@ -158,6 +158,7 @@ int get_token(token_t *token){
 
             case STATE_DIV:
                 if (c == '*') {
+                    commCnt++;
                     state = STATE_COMM_BLOCK_START;
                 } else if (c == '/') {
                     state = STATE_COMM_LINE;
@@ -371,7 +372,6 @@ int get_token(token_t *token){
                 break;
 
             case STATE_COMM_BLOCK_START: // /*
-                commCnt++;
                 if (c == '*') {
                     state = STATE_COMM_BLOCK_END;
                 }
@@ -379,11 +379,14 @@ int get_token(token_t *token){
 
             case STATE_COMM_BLOCK_END:
                 if (c == '/') {
+                    commCnt--;
                     if (commCnt == 0) {
                         state = STATE_START;
                     } else {
-                        commCnt--;
+                        state = STATE_COMM_BLOCK_START;
                     }
+                } else {
+                    state = STATE_COMM_BLOCK_START;
                 }
                 break;
 
