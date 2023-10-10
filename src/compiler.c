@@ -5,9 +5,79 @@
  * @author Alina Vinogradova <xvinog00@vutbr.cz>
  */
 
-#include "scanner/scanner.h"
+#include "scanner.h"
 
-int main(int argc, const char **argv){
+const char* token_type_to_string(token_type_t type) {
+    switch (type) {
+        case TYPE_EOF:
+            return "End of file";
+        case TYPE_EOL:
+            return "End of line";
+        case TYPE_COLON:
+            return ":";
+        case TYPE_DOT:
+            return ".";
+        case TYPE_COMMA:
+            return ",";
+        case TYPE_UNDERSCORE:
+            return "_";
+        case TYPE_LBRACKET:
+            return "{";
+        case TYPE_RBRACKET:
+            return "}";
+        case TYPE_LPAR:
+            return "(";
+        case TYPE_RPAR:
+            return ")";
+        case TYPE_ARROW:
+            return "->";
+        case TYPE_MUL:
+            return "*";
+        case TYPE_DIV:
+            return "/";
+        case TYPE_MINUS:
+            return "-";
+        case TYPE_PLUS:
+            return "+";
+        case TYPE_GT:
+            return ">";
+        case TYPE_GE:
+            return ">=";
+        case TYPE_LT:
+            return "<";
+        case TYPE_LE:
+            return "<=";
+        case TYPE_NEQ:
+            return "!=";
+        case TYPE_EQ:
+            return "==";
+        case TYPE_ASSIGN:
+            return "=";
+        case TYPE_EXCL:
+            return "!";
+        case TYPE_QUES:
+            return "?";
+        case TYPE_NILCOAL:
+            return "??";
+        case TYPE_INT:
+            return "Int";
+        case TYPE_DOUBLE:
+            return "Double";
+        case TYPE_STRING:
+            return "String";
+        case TYPE_ID:
+            return "identifier";
+        case TYPE_KW:
+            return "keyword";
+        case TYPE_DBG:
+            return "debug";
+        default:
+            return "Unknown";
+    }
+}
+
+
+int main(){
     // currently used for dynamic strings testing
     /*
     string_t str;
@@ -34,10 +104,15 @@ int main(int argc, const char **argv){
 
     int ret;
     while(ret != LEXICAL_ERROR && token.type != TYPE_EOF){
-        int ret = get_token(&token);
-        printf("Token is %d\n", token.type);
+        ret = get_token(&token);
+        if (ret != LEXICAL_ERROR) {
+            printf("Token is %s\n", token_type_to_string(token.type));
 
+        } else {
+            printf("LEXICAL ERROR\n");
+            return ret;
+        }
     }
 
-    return 0;
+    return ret;
 }
