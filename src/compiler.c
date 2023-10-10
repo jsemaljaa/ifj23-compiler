@@ -5,7 +5,7 @@
  * @author Alina Vinogradova <xvinog00@vutbr.cz>
  */
 
-#include "scanner.h"
+#include "scanner/scanner.h"
 
 int main(int argc, const char **argv){
     // currently used for dynamic strings testing

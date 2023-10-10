@@ -8,8 +8,8 @@
 #ifndef PROJ_SCANNER_H
 #define PROJ_SCANNER_H
 
-#include "str.h"
-#include "error.h"
+#include "../ds/str.h"
+#include "../ds/error.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -28,7 +28,10 @@ typedef enum {
     K_RETURN,
     K_STRING,
     K_VAR,
-    K_WHILE
+    K_WHILE,
+    K_INT_N,
+    K_STRING_N,
+    K_DOUBLE_N
 } keyword_t;
 
 

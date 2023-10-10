@@ -9,7 +9,7 @@
 
 // Counter for hex in \u escape sequence
 int hexCnt = 0;
-bool comment = false;
+int commCnt = 0;
 
 bool match_keyword(token_t *token) {
     static const char *keywords[] = {
@@ -29,6 +29,19 @@ bool match_keyword(token_t *token) {
         if (str_cmp_const(&token->attribute.id, keywords[i])) {
             token->attribute.keyword = i;
             token->type = TYPE_KW;
+            if (token->attribute.id.s[token->attribute.id.len-1] == '?') {
+                switch (token->attribute.keyword) {
+                    case K_INT:
+                        token->attribute.keyword = K_INT_N;
+                        break;
+                    case K_STRING:
+                        token->attribute.keyword = K_STRING_N;
+                        break;
+                    case K_DOUBLE:
+                        token->attribute.keyword = K_DOUBLE_N;
+                        break;
+                }
+            }
             str_clear(&token->attribute.id);
             return true;
         }
@@ -278,11 +291,7 @@ int get_token(token_t *token){
                 }
                 break;
 
-            case STATE_COMM_BLOCK_END:
-                break;
 
-            case STATE_STRING_MULTILINE:
-                break;
 
 
             case STATE_NUMBER_INTEGER:
@@ -291,23 +300,93 @@ int get_token(token_t *token){
                 } else if (c == '.') {
                     state = STATE_NUMBER_DOUBLE_START;
                 } else if (!isdigit(c)) {
-                    // 
+                    ungetc(c, stdin);
+                    token->attribute.integerNumber = atoi(token->attribute.string.s);
+                    str_clear(&token->attribute.string);
+                    token->type = TYPE_INT;
+                    return NO_ERRORS;
+                } else {
+                    str_append(&token->attribute.string, c);
                 }
                 break;
             case STATE_NUMBER_DOUBLE_START:
+                if (isdigit(c)) {
+                    str_append(&token->attribute.string, c);
+                    state = STATE_NUMBER_DOUBLE_END;
+                } else {
+                    return LEXICAL_ERROR;
+                }
                 break;
             case STATE_NUMBER_DOUBLE_END:
+                if (isdigit(c)) {
+                    str_append(&token->attribute.string, c);
+                } else {
+                    ungetc(c, stdin);
+                    token->attribute.integerNumber = atof(token->attribute.string.s);
+                    str_clear(&token->attribute.string);
+                    token->type = TYPE_DOUBLE;
+                    return NO_ERRORS;
+                }
                 break;
             case STATE_NUMBER_EXP_START:
+                if (c == '+' || c == '-') {
+                    str_append(&token->attribute.string, c);
+                    state = STATE_NUMBER_EXP_SIGN;
+                } else {
+                    return LEXICAL_ERROR;
+                }
                 break;
             case STATE_NUMBER_EXP_SIGN:
+                if (isdigit(c)) {
+                    str_append(&token->attribute.string, c);
+                    state = STATE_NUMBER_EXP_END;
+                } else {
+                    return LEXICAL_ERROR;
+                }
                 break;
             case STATE_NUMBER_EXP_END:
-                break;
-            case STATE_COMM_BLOCK_START:
+                if (isdigit(c)) {
+                    str_append(&token->attribute.string, c);
+                } else {
+                    ungetc(c, stdin);
+                    token->attribute.integerNumber = atof(token->attribute.string.s);
+                    str_clear(&token->attribute.string);
+                    token->type = TYPE_DOUBLE;
+                    return NO_ERRORS;
+                }
                 break;
             case STATE_COMM_LINE:
+                while (true) {
+                    if (c == EOF || c == EOL) {
+                        ungetc(c, stdin);
+                        break;
+                    } else {
+                        c = getc(stdin);
+                    }
+                }
+                state = STATE_START;
                 break;
+
+            case STATE_COMM_BLOCK_START: // /*
+                commCnt++;
+                if (c == '*') {
+                    state = STATE_COMM_BLOCK_END;
+                }
+                break;
+
+            case STATE_COMM_BLOCK_END:
+                if (c == '/') {
+                    if (commCnt == 0) {
+                        state = STATE_START;
+                    } else {
+                        commCnt--;
+                    }
+                }
+                break;
+
+            case STATE_STRING_MULTILINE:
+                break;
+
         }
 
     }
