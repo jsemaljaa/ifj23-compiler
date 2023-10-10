@@ -13,7 +13,7 @@ int commCnt = 0;
 
 states_t state;
 
-bool match_keyword(token_t *token) {
+keyword_t match_keyword(token_t *token) {
     static const char *keywords[] = {
             "Double",
             "else",
@@ -25,28 +25,19 @@ bool match_keyword(token_t *token) {
             "return",
             "String",
             "var",
-            "while"
+            "while",
+            "Int?",
+            "String?",
+            "Double?"
     };
-    for (keyword_t i = K_DOUBLE; i < K_WHILE; i++) {
+
+    for (keyword_t i = K_DOUBLE; i < K_DOUBLE_N; i++) {
         if (!str_cmp_const(&token->attribute.id, keywords[i])) {
-            printf("token id: %s\n", token->attribute.id.s);
-            token->attribute.keyword = i;
-            token->type = TYPE_KW;
-            if (token->attribute.id.s[token->attribute.id.len-1] == '?') {
-                if (token->attribute.keyword == K_INT) {
-                    token->attribute.keyword = K_INT_N;
-                } else if (token->attribute.keyword == K_STRING) {
-                    token->attribute.keyword = K_STRING_N;
-                } else if (token->attribute.keyword == K_DOUBLE) {
-                    token->attribute.keyword = K_DOUBLE_N;
-                }
-            }
-            str_clear(&token->attribute.id);
-            return true;
+            return i;
         }
     }
 
-    return false;
+    return K_NONE;
 }
 
 int get_token(token_t *token){
@@ -57,7 +48,7 @@ int get_token(token_t *token){
 
     while (1) {
         c = getc(stdin);
-        printf("char is %c\n", c);
+//        printf("char is %c\n", c);
 
         switch (state) {
 
@@ -95,6 +86,8 @@ int get_token(token_t *token){
                 } else if (c == '+') {
                     token->type = TYPE_PLUS;
                     return NO_ERRORS;
+                } else if (c == '=') {
+                    state = STATE_EQUALS;
                 } else if (c == '/') {
                     state = STATE_DIV;
                 } else if (c == '_') {
@@ -130,6 +123,15 @@ int get_token(token_t *token){
                     state = STATE_NUMBER_INTEGER;
                 }
                 break;
+
+            case STATE_EQUALS:
+                if (c == '=') {
+                    token->type = TYPE_EQ;
+                } else {
+                    ungetc(c, stdin);
+                    token->type = TYPE_ASSIGN;
+                }
+                return NO_ERRORS;
 
             case STATE_UNDERSCORE:
                 if (isupper(c) || islower(c) || isdigit(c)) {
@@ -212,14 +214,22 @@ int get_token(token_t *token){
                 }
 
             case STATE_ID_KW:
-                if (c == '_' || isupper(c) || islower(c) || isdigit(c)) {
+                if (c == '_' || isupper(c) || islower(c) || isdigit(c) || c == '?') {
                     if (!str_append(&token->attribute.id, c)) {
                         return OTHER_ERROR;
                     }
                 } else {
-                    if (!match_keyword(token)) {
+                    keyword_t kw = match_keyword(token);
+                    ungetc(c, stdin);
+                    if (kw == K_NONE) {
                         token->type = TYPE_ID;
+                        return NO_ERRORS;
+                    } else {
+                        str_clear(&token->attribute.id);
+                        token->attribute.keyword = kw;
+                        token->type = TYPE_KW;
                     }
+
                     return NO_ERRORS;
                 }
                 break;
@@ -246,6 +256,7 @@ int get_token(token_t *token){
                     state = STATE_STRING_MULTILINE;
                     break;
                 } else {
+                    ungetc(c, stdin);
                     token->type = TYPE_STRING;
                     return NO_ERRORS;
                 }
@@ -272,6 +283,7 @@ int get_token(token_t *token){
                     state = STATE_STRING_SEQ_HEX;
                 }
                 break;
+
             case STATE_STRING_SEQ_HEX:
                 if (c == '}') {
                     if (hexCnt == 0) {
@@ -295,9 +307,6 @@ int get_token(token_t *token){
                 }
                 break;
 
-
-
-
             case STATE_NUMBER_INTEGER:
                 if (c == 'e' || c == 'E') {
                     state = STATE_NUMBER_EXP_START;
@@ -306,7 +315,7 @@ int get_token(token_t *token){
                 } else if (!isdigit(c)) {
                     ungetc(c, stdin);
                     token->attribute.integerNumber = atoi(token->attribute.string.s);
-                    str_clear(&token->attribute.string);
+//                    str_clear(&token->attribute.string);
                     token->type = TYPE_INT;
                     return NO_ERRORS;
                 } else {
@@ -326,8 +335,8 @@ int get_token(token_t *token){
                     str_append(&token->attribute.string, c);
                 } else {
                     ungetc(c, stdin);
-                    token->attribute.integerNumber = atof(token->attribute.string.s);
-                    str_clear(&token->attribute.string);
+                    token->attribute.floatNumber = atof(token->attribute.string.s);
+//                    str_clear(&token->attribute.string);
                     token->type = TYPE_DOUBLE;
                     return NO_ERRORS;
                 }
@@ -361,8 +370,10 @@ int get_token(token_t *token){
                 break;
             case STATE_COMM_LINE:
                 while (true) {
-                    if (c == EOF || c == EOL) {
+                    if (c == EOF) {
                         ungetc(c, stdin);
+                        break;
+                    } else if (c == EOL) {
                         break;
                     } else {
                         c = getc(stdin);

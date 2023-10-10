@@ -76,6 +76,41 @@ const char* token_type_to_string(token_type_t type) {
     }
 }
 
+const char* keyword_to_string(keyword_t keyword) {
+    switch (keyword) {
+        case K_DOUBLE:
+            return "Double";
+        case K_ELSE:
+            return "else";
+        case K_FUNC:
+            return "func";
+        case K_IF:
+            return "if";
+        case K_INT:
+            return "Int";
+        case K_LET:
+            return "let";
+        case K_NIL:
+            return "nil";
+        case K_RETURN:
+            return "return";
+        case K_STRING:
+            return "String";
+        case K_VAR:
+            return "var";
+        case K_WHILE:
+            return "while";
+        case K_INT_N:
+            return "Int?";
+        case K_STRING_N:
+            return "String?";
+        case K_DOUBLE_N:
+            return "Double?";
+        default:
+            return "Unknown";
+    }
+}
+
 
 int main(){
     // currently used for dynamic strings testing
@@ -101,12 +136,22 @@ int main(){
 
     token_t token;
     str_create(&token.attribute.id, 20);
-
-    int ret;
-    while(ret != LEXICAL_ERROR && token.type != TYPE_EOF){
+    int tokenCnt = 0;
+    int ret = NO_ERRORS;
+    while (token.type != TYPE_EOF){
         ret = get_token(&token);
+        tokenCnt++;
         if (ret != LEXICAL_ERROR) {
-            printf("Token is %s\n", token_type_to_string(token.type));
+            printf("[%d] --- Token is %s\n", tokenCnt, token_type_to_string(token.type));
+            if (token.type == TYPE_STRING) {
+                printf("------------ String contains: '%s'\n", token.attribute.string.s);
+            } else if (token.type == TYPE_ID) {
+                printf("------------ ID contains: '%s'\n", token.attribute.id.s);
+            } else if (token.type == TYPE_KW) {
+                printf("------------ Keyword contains: '%s'\n", keyword_to_string(token.attribute.keyword));
+            } else if (token.type == TYPE_INT) {
+                printf("------------ Token value: '%d'\n", token.attribute.integerNumber);
+            }
 
         } else {
             printf("LEXICAL ERROR\n");

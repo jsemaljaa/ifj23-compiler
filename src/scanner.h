@@ -20,20 +20,21 @@
 #define EOL '\n'
 
 typedef enum {
-    K_DOUBLE,
-    K_ELSE,
-    K_FUNC,
-    K_IF,
-    K_INT,
-    K_LET,
-    K_NIL,
-    K_RETURN,
-    K_STRING,
-    K_VAR,
-    K_WHILE,
-    K_INT_N,
-    K_STRING_N,
-    K_DOUBLE_N
+    K_DOUBLE,           // Double
+    K_ELSE,             // else
+    K_FUNC,             // func
+    K_IF,               // if
+    K_INT,              // Int
+    K_LET,              // let
+    K_NIL,              // nil
+    K_RETURN,           // return
+    K_STRING,           // String
+    K_VAR,              // var
+    K_WHILE,            // while
+    K_INT_N,            // Int?
+    K_STRING_N,         // String?
+    K_DOUBLE_N,         // Double?
+    K_NONE
 } keyword_t;
 
 typedef enum {
@@ -94,7 +95,8 @@ typedef enum {
     STATE_DIV,
     STATE_GREATER,
     STATE_LESS,
-    STATE_EXCL
+    STATE_EXCL,
+    STATE_EQUALS
 } states_t;
 
 typedef union token_attribute {
@@ -109,6 +111,7 @@ typedef struct token {
     token_type_t type;
     token_attribute_t attribute;
 } token_t;
+
 
 /**
  *

@@ -1,0 +1,220 @@
+[1] --- Token is identifier
+------------ ID contains: 'write'
+[2] --- Token is (
+[3] --- Token is String
+------------ String contains: 'Zadejte cislo pro vypocet faktorialu: '
+[4] --- Token is )
+[5] --- Token is End of line
+[6] --- Token is keyword
+------------ Keyword contains: 'let'
+[7] --- Token is identifier
+------------ ID contains: 'inp'
+[8] --- Token is =
+[9] --- Token is identifier
+------------ ID contains: 'readInt'
+[10] --- Token is (
+[11] --- Token is )
+[12] --- Token is End of line
+[13] --- Token is keyword
+------------ Keyword contains: 'func'
+[14] --- Token is identifier
+------------ ID contains: 'decrement'
+[15] --- Token is (
+[16] --- Token is identifier
+------------ ID contains: 'of'
+[17] --- Token is identifier
+------------ ID contains: 'n'
+[18] --- Token is :
+[19] --- Token is keyword
+------------ Keyword contains: 'Int'
+[20] --- Token is ,
+[21] --- Token is identifier
+------------ ID contains: 'by'
+[22] --- Token is identifier
+------------ ID contains: 'm'
+[23] --- Token is :
+[24] --- Token is keyword
+------------ Keyword contains: 'Int'
+[25] --- Token is )
+[26] --- Token is ->
+[27] --- Token is keyword
+------------ Keyword contains: 'Int'
+[28] --- Token is {
+[29] --- Token is End of line
+[30] --- Token is keyword
+------------ Keyword contains: 'return'
+[31] --- Token is identifier
+------------ ID contains: 'n'
+[32] --- Token is -
+[33] --- Token is identifier
+------------ ID contains: 'm'
+[34] --- Token is End of line
+[35] --- Token is }
+[36] --- Token is End of line
+[37] --- Token is keyword
+------------ Keyword contains: 'func'
+[38] --- Token is identifier
+------------ ID contains: 'factorial'
+[39] --- Token is (
+[40] --- Token is _
+[41] --- Token is identifier
+------------ ID contains: 'n'
+[42] --- Token is :
+[43] --- Token is keyword
+------------ Keyword contains: 'Int'
+[44] --- Token is )
+[45] --- Token is ->
+[46] --- Token is keyword
+------------ Keyword contains: 'Int'
+[47] --- Token is {
+[48] --- Token is End of line
+[49] --- Token is keyword
+------------ Keyword contains: 'var'
+[50] --- Token is identifier
+------------ ID contains: 'result'
+[51] --- Token is :
+[52] --- Token is keyword
+------------ Keyword contains: 'Int?'
+[53] --- Token is End of line
+[54] --- Token is keyword
+------------ Keyword contains: 'if'
+[55] --- Token is (
+[56] --- Token is identifier
+------------ ID contains: 'n'
+[57] --- Token is <
+[58] --- Token is Int
+------------ Token value: '2'
+[59] --- Token is )
+[60] --- Token is {
+[61] --- Token is End of line
+[62] --- Token is identifier
+------------ ID contains: 'result'
+[63] --- Token is =
+[64] --- Token is Int
+------------ Token value: '1'
+[65] --- Token is End of line
+[66] --- Token is }
+[67] --- Token is keyword
+------------ Keyword contains: 'else'
+[68] --- Token is {
+[69] --- Token is End of line
+[70] --- Token is keyword
+------------ Keyword contains: 'let'
+[71] --- Token is identifier
+------------ ID contains: 'decremented_n'
+[72] --- Token is =
+[73] --- Token is identifier
+------------ ID contains: 'decrement'
+[74] --- Token is (
+[75] --- Token is identifier
+------------ ID contains: 'of'
+[76] --- Token is :
+[77] --- Token is identifier
+------------ ID contains: 'n'
+[78] --- Token is ,
+[79] --- Token is identifier
+------------ ID contains: 'by'
+[80] --- Token is :
+[81] --- Token is Int
+------------ Token value: '1'
+[82] --- Token is )
+[83] --- Token is End of line
+[84] --- Token is keyword
+------------ Keyword contains: 'let'
+[85] --- Token is identifier
+------------ ID contains: 'temp_result'
+[86] --- Token is =
+[87] --- Token is identifier
+------------ ID contains: 'factorial'
+[88] --- Token is (
+[89] --- Token is identifier
+------------ ID contains: 'decremented_n'
+[90] --- Token is )
+[91] --- Token is End of line
+[92] --- Token is identifier
+------------ ID contains: 'result'
+[93] --- Token is =
+[94] --- Token is identifier
+------------ ID contains: 'n'
+[95] --- Token is *
+[96] --- Token is identifier
+------------ ID contains: 'temp_result'
+[97] --- Token is End of line
+[98] --- Token is }
+[99] --- Token is End of line
+[100] --- Token is keyword
+------------ Keyword contains: 'return'
+[101] --- Token is identifier
+------------ ID contains: 'result'
+[102] --- Token is !
+[103] --- Token is End of line
+[104] --- Token is }
+[105] --- Token is End of line
+[106] --- Token is keyword
+------------ Keyword contains: 'if'
+[107] --- Token is keyword
+------------ Keyword contains: 'let'
+[108] --- Token is identifier
+------------ ID contains: 'inp'
+[109] --- Token is {
+[110] --- Token is End of line
+[111] --- Token is keyword
+------------ Keyword contains: 'if'
+[112] --- Token is (
+[113] --- Token is identifier
+------------ ID contains: 'inp'
+[114] --- Token is <
+[115] --- Token is Int
+------------ Token value: '0'
+[116] --- Token is )
+[117] --- Token is {
+[118] --- Token is identifier
+------------ ID contains: 'write'
+[119] --- Token is (
+[120] --- Token is String
+------------ String contains: 'Faktorial nelze spocitat!'
+[121] --- Token is )
+[122] --- Token is End of line
+[123] --- Token is }
+[124] --- Token is keyword
+------------ Keyword contains: 'else'
+[125] --- Token is {
+[126] --- Token is End of line
+[127] --- Token is keyword
+------------ Keyword contains: 'let'
+[128] --- Token is identifier
+------------ ID contains: 'vysl'
+[129] --- Token is =
+[130] --- Token is identifier
+------------ ID contains: 'factorial'
+[131] --- Token is (
+[132] --- Token is identifier
+------------ ID contains: 'inp'
+[133] --- Token is )
+[134] --- Token is End of line
+[135] --- Token is identifier
+------------ ID contains: 'write'
+[136] --- Token is (
+[137] --- Token is String
+------------ String contains: 'Vysledek je: '
+[138] --- Token is ,
+[139] --- Token is identifier
+------------ ID contains: 'vysl'
+[140] --- Token is )
+[141] --- Token is End of line
+[142] --- Token is }
+[143] --- Token is End of line
+[144] --- Token is }
+[145] --- Token is keyword
+------------ Keyword contains: 'else'
+[146] --- Token is {
+[147] --- Token is End of line
+[148] --- Token is identifier
+------------ ID contains: 'write'
+[149] --- Token is (
+[150] --- Token is String
+------------ String contains: 'Chyba pri nacitani celeho cisla!'
+[151] --- Token is )
+[152] --- Token is End of line
+[153] --- Token is }
+[154] --- Token is End of file
