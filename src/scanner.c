@@ -88,8 +88,6 @@ int get_token(token_t *token){
                     return NO_ERRORS;
                 } else if (c == '=') {
                     state = STATE_EQUALS;
-                } else if (c == '/') {
-                    state = STATE_DIV;
                 } else if (c == '_') {
                     if(!str_append(&token->attribute.id, c)) {
                         return OTHER_ERROR;
@@ -97,7 +95,9 @@ int get_token(token_t *token){
                     state = STATE_UNDERSCORE;
                 } else if (c == '-') {
                     state = STATE_MINUS;
-                } else if (c == '>') {
+                } else if (c == '/') {
+                    state = STATE_DIV;
+                }  else if (c == '>') {
                     state = STATE_GREATER;
                 } else if (c == '<') {
                     state = STATE_LESS;
@@ -261,6 +261,9 @@ int get_token(token_t *token){
                     return NO_ERRORS;
                 }
 
+            case STATE_STRING_MULTILINE:
+                break;
+
             case STATE_STRING_ESCAPE:
                 if (c == '"' || c == 'n' || c == 'r' || c == 't' || c == '\\') {
                     if (!str_append(&token->attribute.string, c)) {
@@ -315,13 +318,13 @@ int get_token(token_t *token){
                 } else if (!isdigit(c)) {
                     ungetc(c, stdin);
                     token->attribute.integerNumber = atoi(token->attribute.string.s);
-//                    str_clear(&token->attribute.string);
                     token->type = TYPE_INT;
                     return NO_ERRORS;
                 } else {
                     str_append(&token->attribute.string, c);
                 }
                 break;
+
             case STATE_NUMBER_DOUBLE_START:
                 if (isdigit(c)) {
                     str_append(&token->attribute.string, c);
@@ -330,17 +333,18 @@ int get_token(token_t *token){
                     return LEXICAL_ERROR;
                 }
                 break;
+
             case STATE_NUMBER_DOUBLE_END:
                 if (isdigit(c)) {
                     str_append(&token->attribute.string, c);
                 } else {
                     ungetc(c, stdin);
                     token->attribute.floatNumber = atof(token->attribute.string.s);
-//                    str_clear(&token->attribute.string);
                     token->type = TYPE_DOUBLE;
                     return NO_ERRORS;
                 }
                 break;
+
             case STATE_NUMBER_EXP_START:
                 if (c == '+' || c == '-') {
                     str_append(&token->attribute.string, c);
@@ -349,6 +353,7 @@ int get_token(token_t *token){
                     return LEXICAL_ERROR;
                 }
                 break;
+
             case STATE_NUMBER_EXP_SIGN:
                 if (isdigit(c)) {
                     str_append(&token->attribute.string, c);
@@ -357,17 +362,18 @@ int get_token(token_t *token){
                     return LEXICAL_ERROR;
                 }
                 break;
+
             case STATE_NUMBER_EXP_END:
                 if (isdigit(c)) {
                     str_append(&token->attribute.string, c);
                 } else {
                     ungetc(c, stdin);
                     token->attribute.integerNumber = atof(token->attribute.string.s);
-                    str_clear(&token->attribute.string);
                     token->type = TYPE_DOUBLE;
                     return NO_ERRORS;
                 }
                 break;
+
             case STATE_COMM_LINE:
                 while (true) {
                     if (c == EOF) {
@@ -401,8 +407,7 @@ int get_token(token_t *token){
                 }
                 break;
 
-            case STATE_STRING_MULTILINE:
-                break;
+
 
         }
 
