@@ -5,8 +5,8 @@
  * @author Alina Vinogradova <xvinog00@vutbr.cz>
  */
 
-#ifndef PROJ_ERROR_H
-#define PROJ_ERROR_H
+#ifndef COMPILER_ERROR_H
+#define COMPILER_ERROR_H
 
 
 #define NO_ERRORS 0
@@ -67,4 +67,4 @@
  */
 #define OTHER_ERROR 99
 
-#endif //PROJ_ERROR_H
+#endif //COMPILER_ERROR_H

@@ -5,14 +5,17 @@
  * @author Alina Vinogradova <xvinog00@vutbr.cz>
  */
 
-#ifndef PROJ_STR_H
-#define PROJ_STR_H
+#ifndef COMPILER_STR_H
+#define COMPILER_STR_H
 
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 //#include "dbg.h"
+
+#define STR_SIZE 20
 
 typedef struct string {
     int len;            // length of the string
@@ -26,7 +29,7 @@ typedef struct string {
  * @param size Size of the string to initialize
  * @return True if success, False otherwise
  */
-bool str_create(string_t *str, const int size);
+bool str_create(string_t *str, int size);
 
 /**
  * Append a character to the end of a string
@@ -34,7 +37,7 @@ bool str_create(string_t *str, const int size);
  * @param c Character to append
  * @return True if success, False otherwise
  */
-bool str_append(string_t *str, const char c);
+bool str_append(string_t *str, char c);
 
 /**
  * Copy string from 'src' to 'dst'
@@ -55,9 +58,8 @@ bool str_concat(string_t *s1, string_t *s2);
 /**
  * Clear string
  * @param str Pointer to a string
- * @return True if success, False otherwise
  */
-bool str_clear(string_t *str);
+void str_clear(string_t *str);
 
 /**
  * Compare two strings
@@ -91,6 +93,6 @@ void str_free(string_t *str);
  * @param len Size to reallocate
  * @return True if success, False otherwise
  */
-bool str_realloc(string_t *str, const int len);
+bool str_realloc(string_t *str, int len);
 
-#endif //PROJ_STR_H
+#endif //COMPILER_STR_H

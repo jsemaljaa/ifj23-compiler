@@ -8,10 +8,17 @@ CFLAGS = -std=c17 -Werror -Wall -Wextra
 # directories
 SRCDIR = src
 
+# files
+SRCFILES = $(wildcard $(SRCDIR)/*.c)
+TESTING = $(filter-out $(SRCDIR)/compiler.c, $(SRCFILES))
+
 all: $(TARGET)
 
-$(TARGET): $(SRCDIR)/*.c
+$(TARGET): $(SRCFILES)
 	gcc $(CFLAGS) $^  -o $@
+
+test: test.c $(TESTING)
+	gcc $(CFLAGS) $^ -g -o $@
 
 clean:
 	rm -f *.o $(TARGET)

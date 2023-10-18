@@ -1,8 +1,0 @@
-10.10.2023:
-    * probably a bug
-    scanner weird behaviour such as it's returning one token TYPE_EOL after
-    a block comment ends, i'm not sure if it might affect the project in the future
-
-    * add to error detection
-    recognize incorrect lexems with ? (only Int?, String? and Double? are acceptable,
-    add fix later)

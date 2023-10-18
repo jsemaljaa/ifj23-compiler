@@ -5,8 +5,8 @@
  * @author Alina Vinogradova <xvinog00@vutbr.cz>
  */
 
-#ifndef PROJ_SCANNER_H
-#define PROJ_SCANNER_H
+#ifndef COMPILER_SCANNER_H
+#define COMPILER_SCANNER_H
 
 #include "str.h"
 #include "error.h"
@@ -120,4 +120,4 @@ typedef struct token {
  */
 int get_token(token_t *token);
 
-#endif //PROJ_SCANNER_H
+#endif //COMPILER_SCANNER_H

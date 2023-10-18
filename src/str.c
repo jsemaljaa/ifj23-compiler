@@ -70,13 +70,12 @@ bool str_concat(string_t *s1, string_t *s2){
     return true;
 }
 
-bool str_clear(string_t *str){
+void str_clear(string_t *str){
     if (str == NULL || str->s == NULL)
-        return false;
+        return;
 
     str->len = 0;
     str->s[0] = '\0';
-    return true;
 }
 
 int str_cmp(string_t *s1, string_t *s2){

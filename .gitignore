@@ -2,3 +2,5 @@
 cmake-build-debug/
 /compiler
 /tests/
+/build/
+/test
