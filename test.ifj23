@@ -1,0 +1,2 @@
+let x = 30
+let x: String = "30"

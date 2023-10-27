@@ -12,13 +12,18 @@ SRCDIR = src
 SRCFILES = $(wildcard $(SRCDIR)/*.c)
 TESTING = $(filter-out $(SRCDIR)/compiler.c, $(SRCFILES))
 
+.PHONY: clean
+
 all: $(TARGET)
 
 $(TARGET): $(SRCFILES)
 	gcc $(CFLAGS) $^  -o $@
 
+debug: $(SRCFILES)
+	gcc $(CFLAGS) -DLOG_LEVEL=DEBUG $^  -o $(TARGET)-debug
+
 test: test.c $(TESTING)
 	gcc $(CFLAGS) $^ -g -o $@
 
 clean:
-	rm -f *.o $(TARGET)
+	rm -f *.o $(TARGET) $(TARGET)-debug
