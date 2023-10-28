@@ -1,2 +1,5 @@
 let x = 30
-let x: String = "30"
+let id : String = type_string
+
+DEFVAR x
+MOVE GF@x Int@30

@@ -28,6 +28,9 @@ typedef enum types {
 typedef struct var_attr {
     types_t type;
     token_attribute_t attr;
+    // variable defined with keyword var => mutable = true
+    // variable defined with keyword let => mutable = false
+    bool mutable;
 } symt_var_t;
 
 typedef struct func_attr {

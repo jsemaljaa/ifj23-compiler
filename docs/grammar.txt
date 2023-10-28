@@ -1,63 +1,66 @@
-<program> -> <statement_list>
+A => <program> ::= <statement_list>
 
-<statement_list> -> <statement> <statement_list>
-<statement_list> -> EOF
+B => <statement_list> ::= <statement> <statement_list> | EOF
 
-<statement> -> <expression>
-<statement> -> <func_def>
-<statement> -> <var_def>
-<statement> -> <func_call>
-<statement> -> if <expression> { <statement_list> } else { <statement_list> }
-<statement> -> while <expression> { <statement_list> }
+B'= > <statement> ::= <expression>
+B'= > <statement> ::= <func_def>
+B'= > <statement> ::= <var_def>
+B'= > <statement> ::= <func_call>
+B'= > <statement> ::= if <expression> { <statement_list> } else { <statement_list> }
+B'= > <statement> ::= while <expression> { <statement_list> }
 
 // Příkaz může být použit v těle libovolné funkce, ale ne v hlavním těle programu.
-<return> -> return <expression>
-<return> -> ε
+C => <return> ::= return <expression> | ε
 
+D => <func_def> ::= <func_header> <func_body>
 
-<func_def> -> <func_header> <func_body>
-<func_header> -> func <ID> ( <parameters_list> ) -> <return_type>
-<func_header> -> func <ID> ( <parameters_list> )
-<parameters_list> -> <parameter> <parameters_list_more>
-<parameters_list> -> ε
-<parameters_list_more> -> , <parameter> <parameters_list_more>
-<parameters_list_more> -> ε
-<parameter> -> _ <ID> : <type>
-<parameter> -> <ID> _ : <type>
-<func_body> -> { <statement_list> <return> }
+E => <func_header> ::= func <ID> ( <parameters_list> ) <func_header_ret>
+
+E' => <func_header_ret> ::= -> <return_type> | ε
+
+F => <parameters_list> ::= <parameter> <parameters_list_more> | ε
+
+F' => <parameters_list_more> ::= , <parameter> <parameters_list_more> | ε
+
+G => <parameter> ::= _ <ID> : <type> | <ID> _ : <type>
+
+H => <func_body> ::= { <statement_list> <return> }
 
 // Je-li možné při překladu odvodit typ výrazu přiřazovaného do
 // proměnné, tak je možné část ’: typ’ vypustit a typ proměnné id odvodit.
 // Pokud je typ proměnné zadán, lze část ’= výraz’ vynechat.
 
-<var_def> -> let <ID> <var_def_statement>
-<var_def> -> var <ID> <var_def_statement>
-<var_def_statement> -> <var_type>
-<var_def_statement> -> = <expression>
-<var_def_statement> -> <var_type> = <expression>
-<var_type> -> : <type>
-<var_type> -> <nil>
+I => <var_def> ::= let <ID> <var_def_statement>
+I => <var_def> ::= var <ID> <var_def_statement>
 
-<func_call> -> <ID> ( <call_parameters_list> )
-<call_parameters_list> -> <call_parameter> <call_parameters_list_more>
-<call_parameters_list> -> ε
-<call_parameters_list_more> -> , <call_parameter> <call_parameters_list_more>
-<call_parameters_list_more> -> ε
-<call_parameter> -> <id> : <variable>
-<call_parameter> -> <ID>
-<call_parameter> -> <const>
+I' => <var_def_statement> ::= : <var_type_fork> <var_def_statement_expr>
+I' => <var_def_statement> ::= = <expression>
 
-<ID> = id
+J => <var_def_statement_expr> ::= = <expression>
+J => <var_def_statement_expr> ::= ε
 
-<return_type> -> <type>
+J' => <var_type_fork> ::= <type>
+J' => <var_type_fork> ::= <nil>
 
-<type> -> Int
-<type> -> Bool
-<type> -> String
-<nil> -> nil
+K => <func_call> ::= <ID> ( <call_parameters_list> )
+
+L => <call_parameters_list> ::= <call_parameter> <call_parameters_list_more> | ε
+
+L' => <call_parameters_list_more> ::= , <call_parameter> <call_parameters_list_more> | ε
+
+M => <call_parameter> ::= _ <ID> : <type> | <ID> | <const>
+
+N => <ID> = id
+
+O => <return_type> ::= <type>
+
+P => <type> ::= Int | Double | Bool | String
+
+Q => <nil> ::= nil
+
+// type_* je typ tokenu pro konstanty
+R => <const> ::= type_int | type_double | type_string
 
 * expression processing in precedence analysis
-<expression> -> <func_call>
-<expression> -> ε
-
-* <const> is a pseudoterm representing constants like strings, integer and double values 
+<expression> ::= prec_expr
+S => <expression> ::= <func_call>
