@@ -1,0 +1,63 @@
+<program> -> <statement_list>
+
+<statement_list> -> <statement> <statement_list>
+<statement_list> -> EOF
+
+<statement> -> <expression>
+<statement> -> <func_def>
+<statement> -> <var_def>
+<statement> -> <func_call>
+<statement> -> if <expression> { <statement_list> } else { <statement_list> }
+<statement> -> while <expression> { <statement_list> }
+
+// Příkaz může být použit v těle libovolné funkce, ale ne v hlavním těle programu.
+<return> -> return <expression>
+<return> -> ε
+
+
+<func_def> -> <func_header> <func_body>
+<func_header> -> func <ID> ( <parameters_list> ) -> <return_type>
+<func_header> -> func <ID> ( <parameters_list> )
+<parameters_list> -> <parameter> <parameters_list_more>
+<parameters_list> -> ε
+<parameters_list_more> -> , <parameter> <parameters_list_more>
+<parameters_list_more> -> ε
+<parameter> -> _ <ID> : <type>
+<parameter> -> <ID> _ : <type>
+<func_body> -> { <statement_list> <return> }
+
+// Je-li možné při překladu odvodit typ výrazu přiřazovaného do
+// proměnné, tak je možné část ’: typ’ vypustit a typ proměnné id odvodit.
+// Pokud je typ proměnné zadán, lze část ’= výraz’ vynechat.
+
+<var_def> -> let <ID> <var_def_statement>
+<var_def> -> var <ID> <var_def_statement>
+<var_def_statement> -> <var_type>
+<var_def_statement> -> = <expression>
+<var_def_statement> -> <var_type> = <expression>
+<var_type> -> : <type>
+<var_type> -> <nil>
+
+<func_call> -> <ID> ( <call_parameters_list> )
+<call_parameters_list> -> <call_parameter> <call_parameters_list_more>
+<call_parameters_list> -> ε
+<call_parameters_list_more> -> , <call_parameter> <call_parameters_list_more>
+<call_parameters_list_more> -> ε
+<call_parameter> -> <id> : <variable>
+<call_parameter> -> <ID>
+<call_parameter> -> <const>
+
+<ID> = id
+
+<return_type> -> <type>
+
+<type> -> Int
+<type> -> Bool
+<type> -> String
+<nil> -> nil
+
+* expression processing in precedence analysis
+<expression> -> <func_call>
+<expression> -> ε
+
+* <const> is a pseudoterm representing constants like strings, integer and double values 
