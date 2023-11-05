@@ -1,55 +1,70 @@
-/*
- * generator.h
- *
- * @brief Declarations for structures and functions for generator
- * @author Nazar Neskoromnyi <xnesko00@vutbr.cz>
- */
+#ifndef GENERATOR_H
+#define GENERATOR_H
 
-#ifndef GEN_H
-#define GEN_H
-
-//#include <symtable.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ast.h>    
+#include <symtable.h>
+#include <error.h>
+#include <scanner.h>
+#include <parser.h>
 
-typedef enum {
-    
-}InstrType;
 
-typedef struct Instruction {
-    int op_cnt;
-    int prm_cnt;
-    InstrType instruct;
-    char *id;
-    //htab_data_t **operands;
-    DataType *types; //musi byt nekdy definice typov like none, int, string
-    //htab_data_t **params;
-} Instruction;
+void geneneratorPrintHead();
 
-typedef struct Generator {
-    int lbl_cnt;
-    Instruction **instructions;
-    int instr_cnt;
-    //TStack *lbl_stack; zeptat o stacke
-} Generator;
+void generatorConvertBool();
 
-void gen_init(Generator restrict *gen){
-    gen->lbl_cnt = 0;
-    gen->instructions = malloc(sizeof(Instruction *) * /*x*/)
-    if(gen->instructions == NULL)
-        Error();
-    gen->instr_cnt = 0;
-    //nejaky stack init
-}
+void geneneratorStackPush(token_t token);
 
-void gen_init(Generator *);
+void geneneratorExpressionBegin();
 
-void add_instruction(Generator *, Instruction *);
+void geneneratorExpressionEnd();
 
-void gen_free(Generator *);
+void geneneratorCheckTruth();
 
-Instruction *constructor(InstructionType instruct, char *id, htab_data_t **operands, DataType *types, int op_cnt, htab_data_t **params, int prm_cnt);
+void generatorIfElse1(int number);
 
+void generatorIfElse2(int number);
+
+void generatorIfElse3(int number);
+
+void generatorWhileLoop1(int number);
+
+void generatorWhileLoop2(int number);
+
+void generatorWhileLoop3(int number);
+
+void geneneratorMathInstCheck(); 
+
+void generateWrite(int countofparams);
+
+void geneneratorStrLen();
+
+void geneneratorOrd();
+
+void geneneratorChr();
+
+void generatorReadstring();
+
+void generatorReadint();
+
+void generatorReaddouble();
+
+void generatorDoubleval();
+
+void generatorIntval();
+
+void generatorStrval();
+
+void generatorSubstring();
+
+void geneneratorFuncDef1(char *nameoffunction, int parCount, ast_node_t *ast);
+
+void generatorFuncDef2(char *nameoffunction);
+
+void generatorFuncCall(char *nameoffunction, int paramCount, token_t *returnType);
+
+void generatorReturn(char *nameoffunction, bool expr);
 
 #endif
