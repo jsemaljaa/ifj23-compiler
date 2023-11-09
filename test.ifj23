@@ -1,2 +1,13 @@
-let x = 30
-let x: String = "30"
+if 20 + mojeVar
+{
+    x = 30
+    if true
+    {
+        let y = 
+    }
+}
+else
+{
+   var moje = 40 
+}
+var me = 70

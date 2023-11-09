@@ -2,9 +2,8 @@
 #define PARSER_H
 
 #include "scanner.h"
-#include "ast.h"
 #include "log.h"
 
-ast_node_t* parser_parse();
+bool parser_parse(token_type_t endWhen, token_t *token);
 
 #endif // PARSER_H

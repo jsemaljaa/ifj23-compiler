@@ -14,6 +14,12 @@
         exit(2); \
     }
 
+#define expect_operator(current) \
+    if(current != TYPE_MUL && current != TYPE_DIV && current != TYPE_MINUS && current != TYPE_PLUS) { \
+        error("Unexpected token %s", token_type_to_string(current)); \
+        exit(2); \
+    }
+
 __attribute__((unused))
 static const char* token_type_to_string(token_type_t type) {
     switch (type) {

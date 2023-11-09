@@ -10,10 +10,11 @@
 #include "parser.h"
 
 int main(){
-    ast_node_t *ast = parser_parse();
+    token_create(token);
+    bool parser_result = parser_parse(TYPE_EOF, &token);
 
     // On error
-    if(!ast){
+    if(parser_result == 0){
         // TODO
         return -1;
     }
