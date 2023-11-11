@@ -26,6 +26,12 @@
         exit(2); \
     }
 
+#define expect_kw(current, expected) \
+    if(current != expected) { \
+        error("Unexpected keyword %s", keyword_to_string(current)); \
+        exit(2); \
+    }
+
 #define expect_value(current) \
     if(current != TYPE_INT && current != TYPE_DOUBLE && current != TYPE_STRING) { \
         error("Unexpected token %s", token_type_to_string(current)); \

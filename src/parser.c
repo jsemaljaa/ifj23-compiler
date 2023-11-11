@@ -91,8 +91,38 @@ bool parser_parse(token_type_t endWhen, bool firstCall, token_t *token) {
                         }
                     }
                     
+                } else if (token->attribute.keyword == K_WHILE) {
+                    //expect expression
+                    get_token(token);
+
+                    if (token->type == TYPE_LBRACKET) {
+                        expect(token->type, TYPE_EOL);
+                    } else if (token->type == TYPE_EOL) {
+                        expect(token->type, TYPE_LBRACKET);
+                    } else {
+                        exit(SYNTAX_ERROR);
+                    }
+                    parser_parse(TYPE_RBRACKET, false, token);
+                } else if (token->attribute.keyword == K_IF) {
+                    //expect expression
+                    get_token(token);
+
+                    if (token->type == TYPE_LBRACKET) {
+                        expect(token->type, TYPE_EOL);
+                    } else if (token->type == TYPE_EOL) {
+                        expect(token->type, TYPE_LBRACKET);
+                    } else {
+                        exit(SYNTAX_ERROR);
+                    }
+                    parser_parse(TYPE_RBRACKET, false, token);
+
+                    get_token(token);
+                if(token->type == TYPE_EOL) {
+                    get_token(token);
+                    expect_kw(token->attribute.keyword, K_ELSE); // MUZE A NEMUSI, TODO
                 }
-                else SYNTAX_ERROR;
+
+                } else SYNTAX_ERROR;
             } break;
 
             case TYPE_ID:
@@ -128,6 +158,10 @@ bool parser_parse(token_type_t endWhen, bool firstCall, token_t *token) {
         }
 
         get_token(token);
+    }
+
+    if (!firstCall && token->type == TYPE_EOF && endWhen != TYPE_EOF) {
+        exit(SYNTAX_ERROR);
     }
 
     return 0;
