@@ -11,7 +11,7 @@
 
 int main(){
     token_create(token);
-    bool parser_result = parser_parse(TYPE_EOF, &token);
+    bool parser_result = parser_parse(TYPE_EOF, true, &token);
 
     // On error
     if(parser_result == 0){

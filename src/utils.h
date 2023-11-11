@@ -14,6 +14,24 @@
         exit(2); \
     }
 
+#define expect_two(current, expected, expected_second) \
+    if(current != expected && current != expected_second) { \
+        error("Unexpected token %s", token_type_to_string(current)); \
+        exit(2); \
+    }
+
+#define expect_data_type(current) \
+    if(current != K_DOUBLE && current != K_INT && current != K_STRING) { \
+        error("Unexpected keyword %s", keyword_to_string(current)); \
+        exit(2); \
+    }
+
+#define expect_value(current) \
+    if(current != TYPE_INT && current != TYPE_DOUBLE && current != TYPE_STRING) { \
+        error("Unexpected token %s", token_type_to_string(current)); \
+        exit(2); \
+    }
+
 #define expect_operator(current) \
     if(current != TYPE_MUL && current != TYPE_DIV && current != TYPE_MINUS && current != TYPE_PLUS) { \
         error("Unexpected token %s", token_type_to_string(current)); \

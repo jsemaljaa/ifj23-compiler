@@ -69,7 +69,6 @@ typedef enum {
     TYPE_ID,            // identifier
     TYPE_KW,            // keyword
     TYPE_DBG,           // debug
-    TYPE_GLUE,          // AST Glue
 } token_type_t;
 
 typedef enum {

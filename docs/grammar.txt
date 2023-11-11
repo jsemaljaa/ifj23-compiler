@@ -1,0 +1,84 @@
+A => <program> ::= <statement_list>
+
+B => <statement_list> ::= <statement> <statement_list> | EOF
+
+B'= > <statement> ::= <expression>
+B'= > <statement> ::= <func_def>
+B'= > <statement> ::= <var_def>
+B'= > <statement> ::= <func_call>
+B'= > <statement> ::= if <expression> { <statement_list> } else { <statement_list> }
+B'= > <statement> ::= while <expression> { <statement_list> }
+
+
+int parse(token_t token) {
+    while (true) {
+        check_statement(token)
+    }
+}
+
+int check_statement(token_t token){
+    get_token(token);
+    switch (token.type) {
+        case TOKEN_KW:
+            if (let || var || if || while || func) then OK
+            else SYNTAX_ERROR;
+        case TOKEN_ID:
+    }
+}
+
+
+// Příkaz může být použit v těle libovolné funkce, ale ne v hlavním těle programu.
+C => <return> ::= return <expression> | ε
+
+D => <func_def> ::= <func_header> <func_body>
+
+E => <func_header> ::= func <ID> ( <parameters_list> ) <func_header_ret>
+
+E' => <func_header_ret> ::= -> <return_type> | ε
+
+F => <parameters_list> ::= <parameter> <parameters_list_more> | ε
+
+F' => <parameters_list_more> ::= , <parameter> <parameters_list_more> | ε
+
+G => <parameter> ::= _ <ID> : <type> | <ID> _ : <type>
+
+H => <func_body> ::= { <statement_list> <return> }
+
+// Je-li možné při překladu odvodit typ výrazu přiřazovaného do
+// proměnné, tak je možné část ’: typ’ vypustit a typ proměnné id odvodit.
+// Pokud je typ proměnné zadán, lze část ’= výraz’ vynechat.
+
+I => <var_def> ::= let <ID> <var_def_statement>
+I => <var_def> ::= var <ID> <var_def_statement>
+
+I' => <var_def_statement> ::= : <var_type_fork> <var_def_statement_expr>
+I' => <var_def_statement> ::= = <expression>
+
+J => <var_def_statement_expr> ::= = <expression>
+J => <var_def_statement_expr> ::= ε
+
+J' => <var_type_fork> ::= <type>
+J' => <var_type_fork> ::= <nil>
+
+K => <func_call> ::= <ID> ( <call_parameters_list> )
+
+L => <call_parameters_list> ::= <call_parameter> <call_parameters_list_more> | ε
+
+L' => <call_parameters_list_more> ::= , <call_parameter> <call_parameters_list_more> | ε
+
+M => <call_parameter> ::= _ <ID> : <type> | <ID> | <const>
+
+N => <ID> = id
+
+O => <return_type> ::= <type>
+
+P => <type> ::= Int | Double | Bool | String
+
+Q => <nil> ::= nil
+
+// type_* je typ tokenu pro konstanty
+R => <const> ::= type_int | type_double | type_string
+
+* expression processing in precedence analysis
+<expression> ::= prec_expr
+S => <expression> ::= <func_call>

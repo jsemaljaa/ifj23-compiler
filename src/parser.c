@@ -1,5 +1,9 @@
 #include "parser.h"
 #include "utils.h"
+#include "symtable.h"
+
+htable globalTable;
+htable localTable;
 
 void expect_expression(token_t *token) {
    
@@ -25,108 +29,69 @@ void expect_expression(token_t *token) {
 /*
  * @brief Parser entry function
  */
-bool parser_parse(token_type_t endWhen, token_t *token) {
-
+bool parser_parse(token_type_t endWhen, bool firstCall, token_t *token) {
+    if (firstCall)
+    {
+        symt_init(&globalTable);
+    } else {
+        symt_init(&localTable);
+    }
+    
     get_token(token);
 
     while (token->type != endWhen){
         debug("Token: %s", token_type_to_string(token->type));
-        // get_token(token);
-        // continue;
 
-        switch(token->type) {
-            case TYPE_KW: //keyword
+        switch (token->type) {
+    
+            case TYPE_KW:
             {
-                switch(token->attribute.keyword){
-                    case K_VAR: //if variable definition
-                    case K_LET:
-                    {
-                        get_token(token);
-                        expect(token->type, TYPE_ID); //expect variable id
-
-                        get_token(token);
-                        switch(token->type) {
-                            case TYPE_COLON: //if colon symbol
-                            {
-                                get_token(token);
-                                expect(token->type, TYPE_KW); //expect keyword
-                                get_token(token); //get token and fall through to next case
-                            }
-
-                            case TYPE_EOL:
-                            case TYPE_EOF:
-                                break; 
-
-                            case TYPE_ASSIGN: //if assign symbol
-                            {
-                                get_token(token);
-                                //expect data type
-                                if (token->type != TYPE_INT && token->type != TYPE_STRING && token->type != TYPE_DOUBLE) {
-                                    error("Unexpected token %s", token_type_to_string(token->type));
-                                    exit(2);
-                                }
-                                break;
-                            }
-                            default:
-                            break;
+                if (token->attribute.keyword == K_LET || token->attribute.keyword == K_VAR || token->attribute.keyword == K_IF || token->attribute.keyword == K_WHILE || token->attribute.keyword == K_FUNC) {
+                    if (token->attribute.keyword == K_LET || token->attribute.keyword == K_VAR) {
+                        htable *table;
+                        if (firstCall) {
+                            table = &globalTable;
+                        } else {
+                            table = &localTable;
                         }
-                        break;
-                    }
 
-                    case K_WHILE:
-                    case K_IF:
-                    {
-                        keyword_t cycleType = token->attribute.keyword;
                         get_token(token);
-                        //expect expression
-                        expect_expression(token);
-                        expect(token->type, TYPE_EOL);
-                        get_token(token);
-                        expect(token->type, TYPE_LBRACKET);
-                        parser_parse(TYPE_RBRACKET, token);
-                        get_token(token);
-                        expect(token->type, TYPE_EOL);
+                        expect(token->type, TYPE_ID);
+                        
+                        int err = symt_add_var(table, &(token->attribute.id));
+                        
+                        if (err != 0) {
+                            exit(err);
+                        }
 
-                        if(cycleType == K_IF) {
+                        ht_item_t *item = symt_search(table, &(token->attribute.id));
+                        item->type = var;
+                        item->data.var->attr = token->attribute;
+                        printf("%s", item->key.s);
+
+                        get_token(token);
+                        if (token->type == TYPE_ASSIGN) {
                             get_token(token);
-                            if (token->type == TYPE_KW && token->attribute.keyword == K_ELSE) {
-                                get_token(token);
-                                expect(token->type, TYPE_EOL);
-                                get_token(token);
-                                expect(token->type, TYPE_LBRACKET);
-                                get_token(token);
-                                expect(token->type, TYPE_EOL);
-                                parser_parse(TYPE_RBRACKET, token);
-                                get_token(token);
-                                expect(token->type, TYPE_EOL);
-                            }
+                            expect_value(token->type);
+                            get_token(token);
+                            expect_two(token->type, TYPE_EOF, TYPE_EOL);
+                        } else if (token->type == TYPE_COLON) {
+                            get_token(token);
+                            expect(token->type, TYPE_KW);
+                            expect_data_type(token->attribute.keyword);
+                        } else if (token->type == TYPE_EOL) {
+                        } else {
+                            exit(SYNTAX_ERROR);
                         }
-                        break;
                     }
-
-                    default:
-                    break;
+                    
                 }
-                break;
-            }
-
-            case TYPE_ID: //identificator
-            {
-                get_token(token);
-                expect(token->type, TYPE_ASSIGN);
-                get_token(token);
-
-                if (token->type != TYPE_INT && token->type != TYPE_STRING && token->type != TYPE_DOUBLE) {
-                    error("Unexpected token %s", token_type_to_string(token->type));
-                    exit(2);
-                }
-                break;
-            }
+                else SYNTAX_ERROR;
+            } break;
 
             default:
-                break;
+            break;
         }
-
 
         get_token(token);
     }
