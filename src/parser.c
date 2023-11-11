@@ -30,13 +30,16 @@ void expect_expression(token_t *token) {
  * @brief Parser entry function
  */
 bool parser_parse(token_type_t endWhen, bool firstCall, token_t *token) {
+    htable *table;
     if (firstCall)
     {
         symt_init(&globalTable);
+        table = &globalTable;
     } else {
         symt_init(&localTable);
+        table = &localTable;
     }
-    
+
     get_token(token);
 
     while (token->type != endWhen){
@@ -48,12 +51,6 @@ bool parser_parse(token_type_t endWhen, bool firstCall, token_t *token) {
             {
                 if (token->attribute.keyword == K_LET || token->attribute.keyword == K_VAR || token->attribute.keyword == K_IF || token->attribute.keyword == K_WHILE || token->attribute.keyword == K_FUNC) {
                     if (token->attribute.keyword == K_LET || token->attribute.keyword == K_VAR) {
-                        htable *table;
-                        if (firstCall) {
-                            table = &globalTable;
-                        } else {
-                            table = &localTable;
-                        }
 
                         get_token(token);
                         expect(token->type, TYPE_ID);
@@ -67,7 +64,9 @@ bool parser_parse(token_type_t endWhen, bool firstCall, token_t *token) {
                         ht_item_t *item = symt_search(table, &(token->attribute.id));
                         item->type = var;
                         item->data.var->attr = token->attribute;
-                        printf("%s", item->key.s);
+                        if (token->type == TYPE_INT) {item->data.var->type = INTEGER_DT;}
+                        else if (token->type == TYPE_DOUBLE) {item->data.var->type = DOUBLE_DT;}
+                        else if (token->type == TYPE_STRING) {item->data.var->type = STRING_DT;}
 
                         get_token(token);
                         if (token->type == TYPE_ASSIGN || token->type == TYPE_COLON || token->type == TYPE_EOL || token->type == TYPE_EOF) {
@@ -83,7 +82,7 @@ bool parser_parse(token_type_t endWhen, bool firstCall, token_t *token) {
                                 //expect_value(token->type);
                                 //expect expression TODO
                                 //expect data type of expression same as in colon
-                                //add to symtable
+                                //add value to symtable
                                 get_token(token);
                                 expect_two(token->type, TYPE_EOF, TYPE_EOL);
                             }
@@ -94,6 +93,34 @@ bool parser_parse(token_type_t endWhen, bool firstCall, token_t *token) {
                     
                 }
                 else SYNTAX_ERROR;
+            } break;
+
+            case TYPE_ID:
+            {
+                get_token(token);
+                ht_item_t *item = symt_search(table, &(token->attribute.id));
+                if (item == NULL && !firstCall) {
+                    ht_item_t *itemGlobal = symt_search(&globalTable, &(token->attribute.id));
+                    if (itemGlobal != NULL) {
+                        get_token(token);
+                        expect(token->type, TYPE_ASSIGN);
+                        //expect exprssion TODO
+                        //expect data type of expression same as in symtable
+                        //add value to symtable
+                        expect_two(token->type, TYPE_EOF, TYPE_EOL);
+                    } else {
+                        exit(SYNTAX_ERROR);
+                    }
+                } else if (item != NULL) {
+                    get_token(token);
+                    expect(token->type, TYPE_ASSIGN);
+                    //expect exprssion TODO
+                    //expect data type of expression same as in symtable
+                    //add value to symtable
+                    expect_two(token->type, TYPE_EOF, TYPE_EOL);
+                } else {
+                    exit(SYNTAX_ERROR);
+                }
             } break;
 
             default:
