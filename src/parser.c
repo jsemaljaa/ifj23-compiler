@@ -70,16 +70,23 @@ bool parser_parse(token_type_t endWhen, bool firstCall, token_t *token) {
                         printf("%s", item->key.s);
 
                         get_token(token);
-                        if (token->type == TYPE_ASSIGN) {
-                            get_token(token);
-                            expect_value(token->type);
-                            get_token(token);
-                            expect_two(token->type, TYPE_EOF, TYPE_EOL);
-                        } else if (token->type == TYPE_COLON) {
-                            get_token(token);
-                            expect(token->type, TYPE_KW);
-                            expect_data_type(token->attribute.keyword);
-                        } else if (token->type == TYPE_EOL) {
+                        if (token->type == TYPE_ASSIGN || token->type == TYPE_COLON || token->type == TYPE_EOL || token->type == TYPE_EOF) {
+                            if (token->type != TYPE_EOF && token->type != TYPE_EOL) {
+                                if (token->type == TYPE_COLON) {
+                                    get_token(token);
+                                    expect(token->type, TYPE_KW);
+                                    expect_data_type(token->attribute.keyword);
+                                    get_token(token);
+                                }
+                                expect(token->type, TYPE_ASSIGN);
+                                get_token(token);
+                                //expect_value(token->type);
+                                //expect expression TODO
+                                //expect data type of expression same as in colon
+                                //add to symtable
+                                get_token(token);
+                                expect_two(token->type, TYPE_EOF, TYPE_EOL);
+                            }
                         } else {
                             exit(SYNTAX_ERROR);
                         }
