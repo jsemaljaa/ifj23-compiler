@@ -211,6 +211,8 @@ bool parser_parse(token_type_t endWhen, bool firstCall, token_t *token) {
                                 expect(token->type, TYPE_EOL);
                             }
                         }
+                        get_token(token);
+                        expect(token->type, TYPE_EOL);
 
                     }
                 } else SYNTAX_ERROR;
