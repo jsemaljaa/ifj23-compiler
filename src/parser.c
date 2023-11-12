@@ -191,7 +191,7 @@ bool parser_parse(token_type_t endWhen, bool firstCall, token_t *token) {
 
                         while (token->type != TYPE_RBRACKET) {
                             while (token->attribute.keyword != K_RETURN) {
-                                parser_parse(TYPE_KW, false, token);
+                                parser_parse(TYPE_EOL, false, token); //nebude to getovat dalsi tzn skipne to kontrolu kw veci?
                                 get_token(token);
                             }
                             if (itemFunc->data.func->ret != NIL_DT) {
