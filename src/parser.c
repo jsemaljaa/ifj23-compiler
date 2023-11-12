@@ -130,7 +130,88 @@ bool parser_parse(token_type_t endWhen, bool firstCall, token_t *token) {
                             }
                         }
                     } else if (token->attribute.keyword == K_FUNC) {
+                        get_token(token);
+                        expect(token->type, TYPE_ID);
+                        symt_add_func(table, &(token->attribute.id));
+
+                        string_t funcName = token->attribute.id;
+
+                        ht_item_t *itemFunc = symt_search(table, &funcName);
+                        itemFunc->type = func;
+
+                        get_token(token);
+                        expect(token->type, TYPE_LPAR);
+
+                        get_token(token);
+                        string_t args;
+
+                        if (str_create(&args, 30) != true) {
+                            exit(-2);
+                        };
+
+                        while (token->type != TYPE_RPAR) {
+                            
+                            expect_two(token->type, TYPE_ID, TYPE_UNDERSCORE);
+
+                            if (token->type == TYPE_UNDERSCORE) {
+                                get_token(token);
+                            }
+
+                            expect(token->type, TYPE_ID);
+                            str_concat(&args, &(token->attribute.id));
+                            get_token(token);
+                            expect(token->type, TYPE_COLON);
+                            get_token(token);
+                            expect_data_type(token->type);
+                            str_concat(&args, token->attribute.keyword);
+                            str_append(&args, ';');
+                            get_token(token);
+                            // maybe expect comma?
+                        }
+
+                        get_token(token);
+                        if (token->type != TYPE_ARROW && token->type != TYPE_LBRACKET) {
+                            exit(SYNTAX_ERROR);
+                        }
+
+                        if (token->type == TYPE_ARROW) {
+                            get_token(token);
+                            expect_data_type(token);
+                            if (token->attribute.keyword == K_STRING) {itemFunc->data.func->ret = STRING_DT;}
+                            else if (token->attribute.keyword == K_INT) {itemFunc->data.func->ret = INTEGER_DT;}
+                            else if (token->attribute.keyword == K_DOUBLE) {itemFunc->data.func->ret = DOUBLE_DT;}
+                            get_token(token);
+                        } else {
+                            itemFunc->data.func->ret = NIL_DT;
+                        }
                         
+                        expect(token->type, TYPE_LBRACKET);
+                        get_token(token);
+                        expect(token->type, TYPE_EOL);
+
+                        while (token->type != TYPE_RBRACKET) {
+                            while (token->attribute.keyword != K_RETURN) {
+                                parser_parse(TYPE_KW, false, token);
+                                get_token(token);
+                            }
+                            if (itemFunc->data.func->ret != NIL_DT) {
+                                expect(token->type, TYPE_ID);
+                                ht_item_t *returnVar;
+                                returnVar = symt_search(table, &(token->attribute.id));
+                                if (returnVar == NULL) {
+                                    returnVar = symt_search(globalTable,  &(token->attribute.id));
+                                    if (returnVar == NULL) {
+                                        exit(SYNTAX_ERROR);
+                                    }
+                                }
+                                if (itemFunc->data.func->ret != returnVar->data.var->type) {
+                                    exit(SYNTAX_ERROR);
+                                }
+                            } else {
+                                expect(token->type, TYPE_EOL);
+                            }
+                        }
+
                     }
                 } else SYNTAX_ERROR;
             } break;
