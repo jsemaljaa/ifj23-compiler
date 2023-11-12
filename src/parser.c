@@ -89,39 +89,49 @@ bool parser_parse(token_type_t endWhen, bool firstCall, token_t *token) {
                         } else {
                             exit(SYNTAX_ERROR);
                         }
+                    } else if (token->attribute.keyword == K_WHILE) {
+                        //expect expression
+                        get_token(token);
+
+                        if (token->type == TYPE_LBRACKET) {
+                            expect(token->type, TYPE_EOL);
+                        } else if (token->type == TYPE_EOL) {
+                            expect(token->type, TYPE_LBRACKET);
+                        } else {
+                            exit(SYNTAX_ERROR);
+                        }
+                        parser_parse(TYPE_RBRACKET, false, token);
+                    } else if (token->attribute.keyword == K_IF) {
+                        //expect expression
+                        get_token(token);
+
+                        if (token->type == TYPE_LBRACKET) {
+                            expect(token->type, TYPE_EOL);
+                        } else if (token->type == TYPE_EOL) {
+                            expect(token->type, TYPE_LBRACKET);
+                        } else {
+                            exit(SYNTAX_ERROR);
+                        }
+                        parser_parse(TYPE_RBRACKET, false, token);
+
+                        get_token(token);
+                        if(token->type == TYPE_EOL || token->type == TYPE_EOF || (token->type == TYPE_KW && token->attribute.keyword == K_ELSE)) {
+                            if (token->type == TYPE_EOL) {
+                                get_token(token);
+                            }
+                            if (token->type == TYPE_KW && token->attribute.keyword == K_ELSE) {
+                                get_token(token);
+                                expect_two(token->type, TYPE_EOL, TYPE_LBRACKET);
+                                if (token->type == TYPE_EOL) {
+                                    get_token(token);
+                                }
+                                expect(token->type, TYPE_LBRACKET);
+                                parser_parse(TYPE_RBRACKET, false, token);
+                            }
+                        }
+                    } else if (token->attribute.keyword == K_FUNC) {
+                        
                     }
-                    
-                } else if (token->attribute.keyword == K_WHILE) {
-                    //expect expression
-                    get_token(token);
-
-                    if (token->type == TYPE_LBRACKET) {
-                        expect(token->type, TYPE_EOL);
-                    } else if (token->type == TYPE_EOL) {
-                        expect(token->type, TYPE_LBRACKET);
-                    } else {
-                        exit(SYNTAX_ERROR);
-                    }
-                    parser_parse(TYPE_RBRACKET, false, token);
-                } else if (token->attribute.keyword == K_IF) {
-                    //expect expression
-                    get_token(token);
-
-                    if (token->type == TYPE_LBRACKET) {
-                        expect(token->type, TYPE_EOL);
-                    } else if (token->type == TYPE_EOL) {
-                        expect(token->type, TYPE_LBRACKET);
-                    } else {
-                        exit(SYNTAX_ERROR);
-                    }
-                    parser_parse(TYPE_RBRACKET, false, token);
-
-                    get_token(token);
-                if(token->type == TYPE_EOL) {
-                    get_token(token);
-                    expect_kw(token->attribute.keyword, K_ELSE); // MUZE A NEMUSI, TODO
-                }
-
                 } else SYNTAX_ERROR;
             } break;
 
