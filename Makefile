@@ -17,7 +17,7 @@ TESTING = $(filter-out $(SRCDIR)/compiler.c, $(SRCFILES))
 all: $(TARGET)
 
 $(TARGET): $(SRCFILES)
-	gcc $(CFLAGS) $^  -o $@
+	gcc $(CFLAGS) $^ -o $@
 
 debug: $(SRCFILES)
 	gcc $(CFLAGS) -DLOG_LEVEL=DEBUG $^ -g -o $(TARGET)-debug

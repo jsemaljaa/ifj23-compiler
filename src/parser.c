@@ -39,10 +39,7 @@ int while_statement() {
     return NO_ERRORS;
 }
 
-int return_statement() {
-    // TODO
-    return NO_ERRORS;
-}
+
 
 // <statement_list> ::= <statement> <statement_list>
 int statement_list() {
@@ -61,8 +58,12 @@ int statement_list() {
 
     if (token.type == TYPE_RBRACKET) {
         if (inFunc) {
-            inFunc = false;
-            return NO_ERRORS;
+            if (item->data.func->ret == NONE_DT) {
+                inFunc = false;
+                return NO_ERRORS;
+            } else {
+                return SEMANTIC_EXPR_ERROR;
+            }
         }
     } else if (token.type == TYPE_ID) {
         debug("<statement> ::= <expression>");
@@ -223,6 +224,17 @@ int func_body() {
     inFunc = true;
     GET_TOKEN();
     RULE(statement_list());
+    return NO_ERRORS;
+}
+
+int return_statement() {
+    // token here is keyword return
+    GET_TOKEN();
+    if (token.type == TYPE_RBRACKET) {
+        if (item->data.func->ret == NONE_DT) {
+            return NO_ERRORS;
+        }
+    } // TODO other cases
     return NO_ERRORS;
 }
 
