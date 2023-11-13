@@ -46,9 +46,28 @@ bool parser_parse(token_type_t endWhen, bool firstCall, token_t *token) {
         debug("Token: %s", token_type_to_string(token->type));
 
         switch (token->type) {
-    
             case TYPE_KW:
             {
+                switch (token->attribute.keyword) {
+                    case K_LET:
+                    case K_VAR:
+                        get_token(token);
+                        expect(token->type, TYPE_ID);
+
+                        // redefenition check
+                        ht_item_t *item = symt_search(table, &(token->attribute.id));
+                        if (item != NULL) {
+                            exit(SEMANTIC_DEF_ERROR);
+                        }
+
+
+                        int err = symt_add_var(table, &(token->attribute.id));
+                        if (err != NO_ERRORS) exit(err);
+
+                        item = symt_search(table, &(token->attribute.id));
+                        item->type = var;
+
+                }
                 if (token->attribute.keyword == K_LET || token->attribute.keyword == K_VAR || token->attribute.keyword == K_IF || token->attribute.keyword == K_WHILE || token->attribute.keyword == K_FUNC) {
                     if (token->attribute.keyword == K_LET || token->attribute.keyword == K_VAR) {
 
