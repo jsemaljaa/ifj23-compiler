@@ -31,6 +31,19 @@ int main() {
         printf("\tItem type: %s\n", it->type == func ? "func" : "var");
     }
 
+    string_t empty;
+    if (!str_create(&empty, STR_SIZE) || !str_append(&empty, '_')) return OTHER_ERROR;
+
+    types_t type = INTEGER_DT;
+    err = symt_add_func_param(it, &empty, &key, type);
+    output("symt_add_func_param", err);
+
+    for (int i = 0; i < it->data.func->argc; i++) {
+        printf("parameter: %d", it->data.func->argv[i].type);
+    }
+
+    return 0;
+
     str_append(&key, 'b');
     err = symt_add_var(&table, &key);
     output("symt_add_var", err);

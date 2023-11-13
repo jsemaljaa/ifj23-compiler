@@ -11,7 +11,7 @@
 #endif
 
 #define _log(prefix, fmt, ...) \
-    fprintf(stderr, "[" prefix "] " fmt "\n", ##__VA_ARGS__);
+    fprintf(stderr, "[" prefix ", %s:%d] " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__);
 
 #define debug(fmt, ...) \
     if(LOG_LEVEL == DEBUG) _log("DEBUG", fmt, ##__VA_ARGS__);

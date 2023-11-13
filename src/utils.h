@@ -8,7 +8,7 @@
     token_t var_name; \
     str_create(&token.attribute.id, 20);
 
-#define expect(current, expected) \
+#define EXPECT(current, expected) \
     if(current != expected) { \
         error("Unexpected token %s", token_type_to_string(current)); \
         exit(2); \

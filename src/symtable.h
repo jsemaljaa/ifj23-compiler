@@ -33,9 +33,16 @@ typedef struct var_attr {
     bool mutable;
 } symt_var_t;
 
+typedef struct param {
+    string_t callId;
+    string_t inFuncId;
+    types_t type;
+} param_t;
+
 typedef struct func_attr {
-    types_t ret;           // dynamic string for return type
-    string_t argv;          // dynamic string for parameters
+    types_t ret;        // Function return type
+    int argc;           // Amount of func parameters and at the same time curr index of argv array
+    param_t *argv;      // Array of parameters
 } symt_func_t;
 
 // Hashtable item representation
@@ -87,6 +94,16 @@ void symt_init(htable *table);
  * @return NO_ERRORS if successful, otherwise error code
  */
 int symt_add_func(htable *table, string_t *key);
+
+/**
+ * Add a parameter to parameters list of a given function
+ * @param item Pointer to the function item in symtable
+ * @param toCall Parameter name used for function calls
+ * @param toUse Parameter name used for inside of a function
+ * @param type Parameter type
+ * @return NO_ERRORS if successful, otherwise error code
+ */
+int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, types_t type);
 
 /**
  * Initialize item type 'variable' in the table

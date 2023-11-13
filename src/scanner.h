@@ -10,6 +10,7 @@
 
 #include "str.h"
 #include "error.h"
+#include "log.h"
 
 #include <stdio.h>
 #include <stdint.h>

@@ -20,7 +20,7 @@ $(TARGET): $(SRCFILES)
 	gcc $(CFLAGS) $^  -o $@
 
 debug: $(SRCFILES)
-	gcc $(CFLAGS) -DLOG_LEVEL=DEBUG $^  -o $(TARGET)-debug
+	gcc $(CFLAGS) -DLOG_LEVEL=DEBUG $^ -g -o $(TARGET)-debug
 
 test: test.c $(TESTING)
 	gcc $(CFLAGS) $^ -g -o $@

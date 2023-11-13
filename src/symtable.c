@@ -61,12 +61,31 @@ int symt_add_func(htable *table, string_t *key) {
         ht_item_t *item = symt_search(table, key);
         item->type = func;
         item->data.func = malloc(sizeof(symt_func_t));
-        if (!str_create(&item->data.func->argv, STR_SIZE))
-            return OTHER_ERROR;
-        else return NO_ERRORS;
+        if (item->data.func == NULL) return OTHER_ERROR;
+        item->data.func->argc = 0;
+        return NO_ERRORS;
     } else {
         return err;
     }
+}
+
+int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, types_t type) {
+    item->data.func->argc++;
+    item->data.func->argv = (param_t *)realloc(item->data.func->argv, item->data.func->argc * sizeof(param_t));
+    if (item->data.func->argv == NULL) {
+        return OTHER_ERROR;
+    }
+
+    if (!str_create(&item->data.func->argv[item->data.func->argc-1].callId, STR_SIZE)
+        || !str_create(&item->data.func->argv[item->data.func->argc-1].callId, STR_SIZE)) {
+        return OTHER_ERROR;
+    }
+
+    item->data.func->argv[item->data.func->argc - 1].type = type;
+    str_copy(&item->data.func->argv[item->data.func->argc - 1].callId, toCall);
+    str_copy(&item->data.func->argv[item->data.func->argc - 1].inFuncId, toUse);
+
+    return NO_ERRORS;
 }
 
 int symt_add_var(htable *table, string_t *key) {
@@ -117,7 +136,11 @@ void symt_free(htable *table){
         ht_item_t *item = (*table)[i];
         while (item != NULL) {
             if (item->type == func) {
-                str_clear(&item->data.func->argv);
+                for (int i = 0; i < item->data.func->argc; i++) {
+                    str_clear(&item->data.func->argv[i].callId);
+                    str_clear(&item->data.func->argv[i].inFuncId);
+                    free(&item->data.func->argv[i]);
+                }
                 free(item->data.func);
             } else if (item->type == var) {
                 str_clear(&item->data.var->attr.string);
