@@ -13,6 +13,7 @@ htable gTable, lTable;
 // Current token from scanner
 token_t token;
 bool inFunc;
+bool seenReturn = false;
 int ret, code;
 // Temp variable for current htable item
 ht_item_t *item;
@@ -58,7 +59,8 @@ int statement_list() {
 
     if (token.type == TYPE_RBRACKET) {
         if (inFunc) {
-            if (item->data.func->ret == NONE_DT) {
+            if (item->data.func->ret == NONE_DT || seenReturn) {
+                seenReturn = false;
                 inFunc = false;
                 return NO_ERRORS;
             } else {
