@@ -1,67 +1,58 @@
-<program> ::= <statement_list>
-
-<statement_list> ::= <statement> <statement_list> | EOF
-
-<statement> ::= <expression>
-<statement> ::= <func_def>
-<statement> ::= <var_def>
-<statement> ::= <func_call>
-<statement> ::= if <expression> { <statement_list> } else { <statement_list> }
-<statement> ::= while <expression> { <statement_list> }
-
-
-// Příkaz může být použit v těle libovolné funkce, ale ne v hlavním těle programu.
-<return> ::= return <expression> | ε
-
-<func_def> ::= <func_header> <func_body>
-
-<func_header> ::= func <ID> ( <parameters_list> ) <func_header_ret>
-
-<func_header_ret> ::= -> <return_type> | ε
-
-<parameters_list> ::= <parameter> <parameters_list_more> | ε
-
-<parameters_list_more> ::= , <parameter> <parameters_list_more> | ε
-
-<parameter> ::= _ <ID> : <type> | <ID> _ : <type>
-
-<func_body> ::= { <statement_list> <return> }
-
-// Je-li možné při překladu odvodit typ výrazu přiřazovaného do
-// proměnné, tak je možné část ’: typ’ vypustit a typ proměnné id odvodit.
-// Pokud je typ proměnné zadán, lze část ’= výraz’ vynechat.
-
-<var_def> ::= let <ID> <var_def_statement>
-<var_def> ::= var <ID> <var_def_statement>
-
-<var_def_statement> ::= : <var_type_fork> <var_def_statement_expr>
-<var_def_statement> ::= = <expression>
-
-<var_def_statement_expr> ::= = <expression>
-<var_def_statement_expr> ::= ε
-
-<var_type_fork> ::= <type>
-<var_type_fork> ::= <nil>
-
-<func_call> ::= <ID> ( <call_parameters_list> )
-
-<call_parameters_list> ::= <call_parameter> <call_parameters_list_more> | ε
-
-<call_parameters_list_more> ::= , <call_parameter> <call_parameters_list_more> | ε
-
-<call_parameter> ::= _ <ID> : <type> | <ID> | <const>
-
-<ID> = id
-
-<return_type> ::= <type>
-
-<type> ::= Int | Double | Bool | String
-
-<nil> ::= nil
-
-// type_* je typ tokenu pro konstanty
-<const> ::= type_int | type_double | type_string
-
-* expression processing in precedence analysis
-<expression> ::= prec_expr
-<expression> ::= <func_call>
+1) <program> ::= <statement_list>
+2) <statement_list> ::= <statement> <statement_list>
+3) <statement_list> ::= EOF
+4) <statement> ::= <expression>
+5) <statement> ::= <func_def>
+6) <statement> ::= <var_def>
+7) <statement> ::= <func_call>
+8) <statement> ::= if <expression> { <statement_list> } else { <statement_list> }
+9) <statement> ::= while <expression> { <statement_list> }
+    // Příkaz může být použit v těle libovolné funkce, ale ne v hlavním těle programu.
+10) <return> ::= return <expression>
+11) <return> ::= ε
+12) <func_def> ::= <func_header> <func_body>
+13) <func_header> ::= func <ID> ( <parameters_list> ) <func_header_ret>
+14) <func_header_ret> ::= -> <return_type>
+15) <func_header_ret> ::= ε
+16) <parameters_list> ::= <parameter> <parameters_list_more>
+17) <parameters_list> ::= ε
+18) <parameters_list_more> ::= , <parameter> <parameters_list_more>
+19) <parameters_list_more> ::=  ε
+20) <parameter> ::= _ <ID> : <type>
+21) <parameter> ::= <ID> _ : <type>
+22) <func_body> ::= { <statement_list> <return> }
+    // Je-li možné při překladu odvodit typ výrazu přiřazovaného do
+    // proměnné, tak je možné část ’: typ’ vypustit a typ proměnné id odvodit.
+    // Pokud je typ proměnné zadán, lze část ’= výraz’ vynechat.
+23) <var_def> ::= let <ID> <var_def_statement>
+24) <var_def> ::= var <ID> <var_def_statement>
+25) <var_def_statement> ::= : <var_type_fork> <var_def_statement_expr>
+26) <var_def_statement> ::= = <expression>
+27) <var_def_statement_expr> ::= = <expression>
+28) <var_def_statement_expr> ::= ε
+29) <var_type_fork> ::= <type>
+30) <var_type_fork> ::= <nil>
+31) <func_call> ::= <ID> ( <call_parameters_list> )
+32) <call_parameters_list> ::= <call_parameter> <call_parameters_list_more>
+33) <call_parameters_list> ::= ε
+34) <call_parameters_list_more> ::= , <call_parameter> <call_parameters_list_more>
+35) <call_parameters_list_more> ::= ε
+36) <call_parameter> ::= _ <ID> : <type>
+37) <call_parameter> ::= <ID>
+38) <call_parameter> ::= <const>
+39) <ID> = id
+40) <return_type> ::= <type>
+41) <type> ::= Int
+42) <type> ::= Double
+43) <type> ::= Bool
+44) <type> ::= String
+45) <nil> ::= nil
+    // type_* je typ tokenu pro konstanty
+    // const is a pseudoterm for const values
+    // can be used as function call parameter or as a part of an expression
+46) <const> ::= type_int
+47) <const> ::= type_double
+48) <const> ::= type_string
+    * expression processing in precedence analysis
+49) <expression> ::= prec_expr
+50) <expression> ::= <func_call>
