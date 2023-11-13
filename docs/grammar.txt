@@ -10,23 +10,6 @@ B'= > <statement> ::= if <expression> { <statement_list> } else { <statement_lis
 B'= > <statement> ::= while <expression> { <statement_list> }
 
 
-int parse(token_t token) {
-    while (true) {
-        check_statement(token)
-    }
-}
-
-int check_statement(token_t token){
-    get_token(token);
-    switch (token.type) {
-        case TOKEN_KW:
-            if (let || var || if || while || func) then OK
-            else SYNTAX_ERROR;
-        case TOKEN_ID:
-    }
-}
-
-
 // Příkaz může být použit v těle libovolné funkce, ale ne v hlavním těle programu.
 C => <return> ::= return <expression> | ε
 
@@ -82,3 +65,56 @@ R => <const> ::= type_int | type_double | type_string
 * expression processing in precedence analysis
 <expression> ::= prec_expr
 S => <expression> ::= <func_call>
+
+
+Therefore, view:
+
+A  ::= B
+B  ::= B' B
+B  ::= EOF
+B' ::= S
+B' ::= D
+B' ::= I
+B' ::= K
+B' ::= if S { B } else { B }
+B' ::= while S { B }
+C  ::= return S
+C  ::= ''
+D  ::= E H
+E  ::= func N E'
+E' ::= -> O
+E' ::= ''
+F  ::= G F'
+F  ::= ''
+F' ::= , G F'
+F' ::= ''
+G  ::= _ N : P
+G  ::= N _ : P
+H  ::= { B C }
+I  ::= let N I'
+I  ::= var N I'
+I' ::= : J' J
+I' ::= = S
+J  ::= = S
+J  ::= ''
+J' ::= P
+J' ::= Q
+K  ::= N ( L )
+L  ::= M L'
+L  ::= ''
+L' ::= , M L'
+L' ::= ''
+M  ::= _ N : P
+M  ::= N
+M  ::= R
+N  ::= id
+O  ::= P
+P  ::= Int
+P  ::= Double
+P  ::= Bool
+P  ::= String
+Q  ::= nil
+R  ::= type_int
+R  ::= type_double
+R  ::= type_string
+S  ::= exp
