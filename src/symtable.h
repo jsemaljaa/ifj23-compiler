@@ -22,7 +22,8 @@ typedef enum types {
     NIL_DT,             // nil
     INTEGER_N_DT,       // Int?
     DOUBLE_N_DT,        // Double?
-    STRING_N_DT         // String?
+    STRING_N_DT,        // String?
+    NONE_DT             // For functions with no return datatype
 } types_t;
 
 typedef struct var_attr {

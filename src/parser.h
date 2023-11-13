@@ -46,6 +46,7 @@ int return_statement();
 int parameters_list();
 int parameter();
 int parameters_list_more();
+int func_body();
 
 int kw_to_type(keyword_t kw);
 
