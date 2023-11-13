@@ -51,7 +51,7 @@ int statement_list() {
         return inFunc ? SYNTAX_ERROR : NO_ERRORS;
     }
 
-        // other statements:
+    // other statements:
     // 4) <statement> ::= <expression>
     // 5) <statement> ::= <func_def>
     // 6) <statement> ::= <var_def>
@@ -125,7 +125,6 @@ int func_def() {
         EXPECT(token.type, TYPE_LPAR);
         RULE(parameters_list());
 
-        GET_TOKEN();
         if (token.type == TYPE_ARROW) {
             GET_TOKEN();
             EXPECT(token.type, TYPE_KW);
@@ -138,7 +137,7 @@ int func_def() {
         } else if (token.type == TYPE_LBRACKET) {
             item->data.func->ret = NONE_DT;
             RULE(func_body());
-        }
+        } else return SYNTAX_ERROR;
         return NO_ERRORS;
     } else {
         if (item->type == func) return SEMANTIC_DEF_ERROR;
@@ -153,57 +152,74 @@ int parameters_list() {
     symt_init(&lTable);
     GET_TOKEN();
     if (token.type == TYPE_RPAR) {
+        GET_TOKEN();
         item->data.func->argc = 0;
         return NO_ERRORS;
     } else if (token.type == TYPE_UNDERSCORE || token.type == TYPE_ID) {
         RULE(parameter());
-        RULE(parameters_list_more());
         return NO_ERRORS;
     } else {
         return SYNTAX_ERROR;
     }
-    return NO_ERRORS;
 }
 
 int parameter() {
     debug("Rule: parameter");
-    // If we came from parameters_list_more rule
-    if (token.type == TYPE_COMMA) GET_TOKEN();
-    string_t empty;
-    code = str_create(&empty, STR_SIZE);
-    if (!code || !str_append(&empty, '_')) return OTHER_ERROR;
-    // underscore first => skip toCall, only inFuncId exists
-    if (token.type == TYPE_UNDERSCORE) {
-        GET_TOKEN();
-        EXPECT(token.type, TYPE_ID);
-        str_copy(&token.attribute.id, &tmpTokenId);
-        GET_TOKEN();
-        EXPECT(token.type, TYPE_COLON);
-        GET_TOKEN();
-        EXPECT(token.type, TYPE_KW);
-        int type = kw_to_type(token.attribute.keyword);
-        if (type  == OTHER_ERROR) return SYNTAX_ERROR;
-        code = symt_add_func_param(item, &empty, &tmpTokenId, type);
-        if (code != NO_ERRORS) return code;
+    string_t toCall;
+    code = str_create(&toCall, STR_SIZE);
+    if (!code) return OTHER_ERROR;
+    // first PARAMETER_NAME
+    if (token.type == TYPE_ID) {
+        str_copy(&token.attribute.id, &toCall);
+    } else if (token.type == TYPE_UNDERSCORE) { // underscore first => skip toCall, only inFuncId exists
+        str_append(&toCall, '_');
+    } else {
+        return SYNTAX_ERROR;
     }
 
+    // second PARAMETER_ID
+    GET_TOKEN();
+    if (token.type == TYPE_UNDERSCORE) { // second is underscore
+        // Při použití _ jako identifikátor parametru se tento parametr v těle funkce nepoužívá.
+        // not sure how to understand this, leaving this like that rn
+        str_clear(&tmpTokenId);
+        str_append(&tmpTokenId, '_');
+    } else if (token.type == TYPE_ID) { // second is ID to use inside a function
+        str_copy(&token.attribute.id, &tmpTokenId);
+    } else {
+        return SYNTAX_ERROR;
+    }
+
+    GET_TOKEN();
+    EXPECT(token.type, TYPE_COLON);
+    GET_TOKEN();
+    EXPECT(token.type, TYPE_KW);
+    int type = kw_to_type(token.attribute.keyword);
+    if (type  == OTHER_ERROR) return SYNTAX_ERROR;
+    code = symt_add_func_param(item, &toCall, &tmpTokenId, type);
+    if (code != NO_ERRORS) return code;
+
+    // Add a variable to local function symtable
+    code = symt_add_var(&lTable, &tmpTokenId, type);
+    GET_TOKEN();
     RULE(parameters_list_more());
     return NO_ERRORS;
 }
 
 int parameters_list_more() {
     debug("Rule: parameters_list_more");
-    GET_TOKEN();
     if (token.type == TYPE_COMMA) { // <parameters_list_more> ::= , <parameter> <parameters_list_more>
+        GET_TOKEN();
         RULE(parameter());
-        RULE(parameters_list_more());
     } else if (token.type == TYPE_RPAR) {
+        GET_TOKEN();
         return NO_ERRORS;
     }
     return NO_ERRORS;
 }
 
 int func_body() {
+    debug("<func_body> ::= { <statement_list> <return> }");
     inFunc = true;
     GET_TOKEN();
     RULE(statement_list());

@@ -20,6 +20,7 @@
 #define RULE(func) \
     code = (func);                      \
     EXPECT_ERROR(code);                 \
+    debug("Rule returned %d", code);
 
 #define GET_TOKEN()                 \
     code = get_token(&token);          \

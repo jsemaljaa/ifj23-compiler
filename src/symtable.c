@@ -88,7 +88,7 @@ int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, type
     return NO_ERRORS;
 }
 
-int symt_add_var(htable *table, string_t *key) {
+int symt_add_var(htable *table, string_t *key, types_t type) {
     // Redefinice proměnné v témže bloku vede na chybu 3.
     ht_item_t *item = symt_search(table, key);
     if (item && item->type == var) {
@@ -101,6 +101,8 @@ int symt_add_var(htable *table, string_t *key) {
         item = symt_search(table, key);
         item->type = var;
         item->data.var = malloc(sizeof(symt_var_t));
+        item->data.var->type = type;
+        item->data.var->mutable = false;
         if (!str_create(&item->data.var->attr.string, STR_SIZE) || !str_create(&item->data.var->attr.id, STR_SIZE))
             return OTHER_ERROR;
         else return NO_ERRORS;

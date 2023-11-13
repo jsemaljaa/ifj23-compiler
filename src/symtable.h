@@ -112,7 +112,7 @@ int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, type
  * @param key item key
  * @return NO_ERRORS if successful, otherwise error code
  */
-int symt_add_var(htable *table, string_t *key);
+int symt_add_var(htable *table, string_t *key, types_t type);
 
 /**
  * Search for an item in hashtable
