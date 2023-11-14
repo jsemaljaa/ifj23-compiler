@@ -38,7 +38,6 @@ int while_statement() {
 
 // <statement_list> ::= <statement> <statement_list>
 int statement_list() {
-    debug("<statement_list> ::= <statement> <statement_list>");
     while (token.type == TYPE_EOL) {
         GET_TOKEN();
     }
@@ -49,7 +48,6 @@ int statement_list() {
         }
     }
 
-    debug("wtf");
     // other statements:
     // 4) <statement> ::= <expression>
     // 5) <statement> ::= <func_def>
@@ -69,12 +67,10 @@ int statement_list() {
             }
         }
     } else if (token.type == TYPE_ID) {
-        debug("<statement> ::= <expression>");
         RULE(expression()); // expression or func call
     } else if (token.type == TYPE_KW) {
         switch (token.attribute.keyword) {
             case K_FUNC:
-            debug("<statement> ::= <func_def>");
                 if (!inFunc) {
                     RULE(func_def());
                 } else {
@@ -83,19 +79,15 @@ int statement_list() {
                 break;
             case K_LET:
             case K_VAR:
-            debug("<statement> ::= <var_def>");
                 RULE(var_def());
                 break;
             case K_IF:
-            debug("<statement> ::= if <expression> { <statement_list> } else { <statement_list> }");
                 RULE(if_statement());
                 break;
             case K_WHILE:
-            debug("<statement> ::= while <expression> { <statement_list> }");
                 RULE(while_statement());
                 break;
             case K_RETURN:
-            debug("<return> ::= return <expression>");
                 if (!inFunc) {
                     return SYNTAX_ERROR;
                 } else {
@@ -111,7 +103,6 @@ int statement_list() {
 }
 
 int func_def() {
-    debug("<func_def> ::= <func_header> <func_body>");
     // check <func_header> first
     // token here is keyword with value K_FUNC
     GET_TOKEN();
@@ -154,7 +145,6 @@ int func_def() {
 
 // <parameters_list> ::= <parameter> <parameters_list_more> | ε
 int parameters_list() {
-    debug("Rule: parameters_list");
     symt_init(&lTable);
     GET_TOKEN();
     if (token.type == TYPE_RPAR) {
@@ -170,7 +160,6 @@ int parameters_list() {
 }
 
 int parameter() {
-    debug("Rule: parameter");
     string_t toCall;
     code = str_create(&toCall, STR_SIZE);
     if (!code) return OTHER_ERROR;
@@ -215,7 +204,6 @@ int parameter() {
 }
 
 int parameters_list_more() {
-    debug("Rule: parameters_list_more");
     if (token.type == TYPE_COMMA) { // <parameters_list_more> ::= , <parameter> <parameters_list_more>
         GET_TOKEN();
         RULE(parameter());
@@ -227,7 +215,6 @@ int parameters_list_more() {
 }
 
 int func_body() {
-    debug("<func_body> ::= { <statement_list> <return> }");
     inFunc = true;
     GET_TOKEN();
     RULE(statement_list());
@@ -316,7 +303,7 @@ int expression(){
             EXPECT_ERROR(code);
             item = symt_search(&gTable, &tmpTokenId);
             item->data.func->isDefined = false;
-            RULE(call_parameters_list(false));
+            RULE(call_parameters_list());
             return NO_ERRORS;
             GET_TOKEN();
             if (token.type == TYPE_ID) {
@@ -351,11 +338,10 @@ int expression(){
 }
 
 //<call_parameters_list> ::= <call_parameter> <call_parameters_list_more> | ε
-int call_parameters_list(bool defined) {
-    debug("Rule: call_parameters_list");
+int call_parameters_list() {
     GET_TOKEN();
     if (token.type == TYPE_RPAR) {
-        if (defined) {
+        if (item->data.func->isDefined) {
             // TODO: EXPAND FUNC CALL ! ! !
             if (item->data.func->argc == 0) {
                 GET_TOKEN();
@@ -363,9 +349,9 @@ int call_parameters_list(bool defined) {
             }
             else return SEMANTIC_CALL_RET_ERROR;
         } else {
-            code = symt_add_func_call(item);
-            EXPECT_ERROR(code);
-            symt_zero_parameters_call(item);
+            EXEC(symt_add_func_call(item));
+            EXEC(symt_zero_parameters_call(item));
+            EXEC(append_func_keys(item->key));
             GET_TOKEN();
             return NO_ERRORS;
         }
@@ -380,7 +366,6 @@ int call_parameters_list(bool defined) {
 int call_parameter() {
     // parser_call_parameter_t *params;
     // int callArgc;
-    debug("Rule: call_parameter");
     return NO_ERRORS;
 }
 
@@ -403,6 +388,9 @@ int parse() {
 
     free_func_keys();
     symt_free(&gTable);
+    str_clear(&token.attribute.id);
+    str_clear(&tmpTokenId);
+    free(item);
 
     debug("after cleaning");
     return code;

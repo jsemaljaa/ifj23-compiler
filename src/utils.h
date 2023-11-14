@@ -4,45 +4,31 @@
 #include "scanner.h"
 #include "log.h"
 
-#define token_create(var_name) \
-    token_t var_name; \
-    str_create(&token.attribute.id, 20);
+#define EXPECT_ERROR(code)      \
+    if (code != NO_ERRORS) return code;  \
+
+#define EXEC(func) \
+    code = (func); \
+    EXPECT_ERROR(code); \
+    debug("Executing %s", #func); \
+
+#define RULE(func)                      \
+    code = (func);                      \
+    EXPECT_ERROR(code);                 \
+    debug("Applying rule %s", #func);   \
+
+#define GET_TOKEN()                 \
+    code = get_token(&token);          \
+    debug("Token: %s", token_type_to_string(token.type)); \
+    if (token.type == TYPE_KW) debug("Keyword value: %s", keyword_to_string(token.attribute.keyword));                                \
+    EXPECT_ERROR(code);                                \
+
 
 #define EXPECT(current, expected) \
     if(current != expected) { \
         error("Unexpected token %s", token_type_to_string(current)); \
         exit(2); \
-    }
-
-#define expect_two(current, expected, expected_second) \
-    if(current != expected && current != expected_second) { \
-        error("Unexpected token %s", token_type_to_string(current)); \
-        exit(2); \
-    }
-
-#define expect_data_type(current) \
-    if(current != K_DOUBLE && current != K_INT && current != K_STRING) { \
-        error("Unexpected keyword %s", keyword_to_string(current)); \
-        exit(2); \
-    }
-
-#define expect_kw(current, expected) \
-    if(current != expected) { \
-        error("Unexpected keyword %s", keyword_to_string(current)); \
-        exit(2); \
-    }
-
-#define expect_value(current) \
-    if(current != TYPE_INT && current != TYPE_DOUBLE && current != TYPE_STRING) { \
-        error("Unexpected token %s", token_type_to_string(current)); \
-        exit(2); \
-    }
-
-#define expect_operator(current) \
-    if(current != TYPE_MUL && current != TYPE_DIV && current != TYPE_MINUS && current != TYPE_PLUS) { \
-        error("Unexpected token %s", token_type_to_string(current)); \
-        exit(2); \
-    }
+    } \
 
 __attribute__((unused))
 static const char* token_type_to_string(token_type_t type) {
