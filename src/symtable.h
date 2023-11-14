@@ -42,10 +42,25 @@ typedef struct param {
     datatype_t type;
 } param_t;
 
+typedef struct call_parameter {
+    // bar(with: par)
+    // foo(param, "aaa")
+    string_t callId;
+    symt_var_t var;
+} parser_call_parameter_t;
+
+typedef struct func_call {
+    int argc;
+    parser_call_parameter_t *params;
+} parser_func_call_t;
+
 typedef struct func_attr {
-    datatype_t ret;        // Function return type
-    int argc;           // Amount of func parameters and at the same time curr index of argv array
-    param_t *argv;      // Array of parameters
+    bool isDefined;
+    datatype_t ret;                 // Function return type
+    int argc;                       // Amount of func parameters and at the same time curr index of argv array
+    param_t *argv;                  // Array of parameters
+    parser_func_call_t *calls;      // Array of seen function calls
+    int callsCnt;
 } symt_func_t;
 
 // Hashtable item representation
@@ -107,6 +122,16 @@ int symt_add_func(htable *table, string_t *key);
  * @return NO_ERRORS if successful, otherwise error code
  */
 int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, datatype_t type);
+
+/**
+ *
+ * @param table
+ * @param key
+ * @param argc
+ * @param params
+ * @return
+ */
+int symt_add_func_call(htable *table, string_t *key, int argc, parser_call_parameter_t *params);
 
 /**
  * Initialize item type 'variable' in the table

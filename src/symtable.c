@@ -76,14 +76,58 @@ int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, data
         return OTHER_ERROR;
     }
 
-    if (!str_create(&item->data.func->argv[item->data.func->argc-1].callId, STR_SIZE)
-        || !str_create(&item->data.func->argv[item->data.func->argc-1].callId, STR_SIZE)) {
+    if (!str_create(&item->data.func->argv[item->data.func->argc - 1].callId, STR_SIZE)
+        || !str_create(&item->data.func->argv[item->data.func->argc - 1].callId, STR_SIZE)) {
         return OTHER_ERROR;
     }
 
     item->data.func->argv[item->data.func->argc - 1].type = type;
     str_copy(&item->data.func->argv[item->data.func->argc - 1].callId, toCall);
     str_copy(&item->data.func->argv[item->data.func->argc - 1].inFuncId, toUse);
+
+    return NO_ERRORS;
+}
+
+int symt_add_func_call_param(ht_item_t *item, string_t *callId, symt_var_t var) {
+//    item->data.func->callsCnt++;
+    int currCall = item->data.func->callsCnt - 1;
+    item->data.func->calls[currCall].argc++;
+    int currParam = item->data.func->calls[currCall].argc - 1;
+    item->data.func->calls[currCall].params = realloc(item->data.func->calls[currCall].params, item->data.func->calls[currCall].argc * sizeof(parser_call_parameter_t));
+    if (item->data.func->calls[currCall].params == NULL) return OTHER_ERROR;
+
+    if (!str_create(&item->data.func->calls[currCall].params[currParam].callId, STR_SIZE)) return OTHER_ERROR;
+
+    str_copy(callId, &item->data.func->calls[currCall].params[currParam].callId);
+    item->data.func->calls[currCall].params[currParam].var = var;
+
+    return NO_ERRORS;
+}
+
+int symt_add_func_call(htable *table, string_t *key, int argc, parser_call_parameter_t *params) {
+    ht_item_t *item = symt_search(table, key);
+    if (item == NULL) {
+        int code = symt_add_func(table, key);
+        if (code != NO_ERRORS) return code;
+        item = symt_search(table, key);
+        item->data.func->isDefined = false;
+    }
+    // assume we already have func as we need in *item
+    item->data.func->callsCnt++;
+    item->data.func->calls = realloc(item->data.func->calls, item->data.func->callsCnt * sizeof(parser_call_parameter_t));
+    if (item->data.func->calls[item->data.func->callsCnt - 1].params == NULL) return OTHER_ERROR;
+    item->data.func->calls[item->data.func->callsCnt - 1].argc = argc;
+    if (argc == 0) {
+        item->data.func->calls[item->data.func->callsCnt - 1].params = NULL;
+        return NO_ERRORS;
+    }
+    item->data.func->calls[item->data.func->callsCnt - 1].params = malloc(argc * sizeof(parser_call_parameter_t));
+    for (int i = 0; i < argc - 1; i++) {
+        item->data.func->calls[item->data.func->callsCnt - 1].params[i].var = params[i].var;
+        if(!str_create(&item->data.func->calls[item->data.func->callsCnt - 1].params[i].callId, STR_SIZE)) return OTHER_ERROR;
+        str_copy(&params[i].callId, &item->data.func->calls[item->data.func->callsCnt - 1].params[i].callId);
+    }
+    item->data.func->calls[item->data.func->callsCnt - 1].params = params;
 
     return NO_ERRORS;
 }

@@ -13,7 +13,6 @@
 #include "log.h"
 #include "utils.h"
 
-
 #define EXPECT_ERROR(code)      \
     if (code != NO_ERRORS) return code;  \
 
@@ -48,7 +47,12 @@ int parameters_list();
 int parameter();
 int parameters_list_more();
 int func_body();
+int call_parameters_list(bool defined);
+int call_parameter();
+
+int save_func_call();
 
 int kw_to_type(keyword_t kw, datatype_t *datatype);
+bool is_token_const(token_type_t type);
 
 #endif // PARSER_H

@@ -21,20 +21,20 @@
 #define EOL '\n'
 
 typedef enum {
+    K_INT,              // Int
     K_DOUBLE,           // Double
+    K_STRING,           // String
+    K_INT_N,            // Int?
+    K_DOUBLE_N,         // Double?
+    K_STRING_N,         // String?
+    K_NIL,              // nil
     K_ELSE,             // else
     K_FUNC,             // func
     K_IF,               // if
-    K_INT,              // Int
     K_LET,              // let
-    K_NIL,              // nil
     K_RETURN,           // return
-    K_STRING,           // String
     K_VAR,              // var
     K_WHILE,            // while
-    K_INT_N,            // Int?
-    K_STRING_N,         // String?
-    K_DOUBLE_N,         // Double?
     K_NONE
 } keyword_t;
 

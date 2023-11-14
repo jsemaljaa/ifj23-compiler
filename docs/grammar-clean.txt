@@ -33,13 +33,13 @@
 29) <var_type_fork> ::= <type>
 30) <var_type_fork> ::= <nil>
 31) <func_call> ::= <ID> ( <call_parameters_list> )
-32) <call_parameters_list> ::= <call_parameter> <call_parameters_list_more>
-33) <call_parameters_list> ::= ε
+32) <call_parameters_list> ::= <call_parameter> <call_parameters_list_more> | ε
 34) <call_parameters_list_more> ::= , <call_parameter> <call_parameters_list_more>
 35) <call_parameters_list_more> ::= ε
-36) <call_parameter> ::= _ <ID> : <type>
-37) <call_parameter> ::= <ID>
 38) <call_parameter> ::= <const>
+36) <call_parameter> ::= <ID> <call_parameter_suffix>
+37) <call_parameter_sufix> ::= : <ID>
+37) <call_parameter_sufix> ::= ε
 39) <ID> = id
 40) <return_type> ::= <type>
 41) <type> ::= Int

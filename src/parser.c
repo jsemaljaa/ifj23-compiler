@@ -20,7 +20,9 @@ ht_item_t *item;
 // Temp variable for token attr id
 string_t tmpTokenId;
 
-
+// Temp variables for func calls
+parser_call_parameter_t *params = NULL;
+int callArgc;
 
 int if_statement() {
     // TODO
@@ -116,32 +118,35 @@ int func_def() {
     // Každá funkce musí být definovaná, jinak končí analýza chybou 3.
     // Definice funkce nemusí lexikálně předcházet kódu pro použití této funkce, tzv. volání funkce.
 
-    // TODO: not sure but right now redefinition of a function is SEMANTIC_DEF_ERROR
     item = symt_search(&gTable, &token.attribute.id);
-    if (item == NULL) {
+    if (item != NULL) { // check if func is not defined, but was called previously
+        if (item->type == var || (item->type == func && item->data.func->isDefined)) {
+            return SEMANTIC_DEF_ERROR;
+        }
+    } else {
         code = symt_add_func(&gTable, &token.attribute.id);
+        EXPECT_ERROR(code);
         item = symt_search(&gTable, &token.attribute.id);
+    }
+
+    item->data.func->isDefined = true;
+    // after this fork we will have function struct in item
+    GET_TOKEN();
+    EXPECT(token.type, TYPE_LPAR);
+    RULE(parameters_list());
+
+    if (token.type == TYPE_ARROW) {
+        GET_TOKEN();
+        EXPECT(token.type, TYPE_KW);
+        code = kw_to_type(token.attribute.keyword, &item->data.func->ret);
         EXPECT_ERROR(code);
         GET_TOKEN();
-        EXPECT(token.type, TYPE_LPAR);
-        RULE(parameters_list());
-
-        if (token.type == TYPE_ARROW) {
-            GET_TOKEN();
-            EXPECT(token.type, TYPE_KW);
-            code = kw_to_type(token.attribute.keyword, &item->data.func->ret);
-            EXPECT_ERROR(code);
-            GET_TOKEN();
-            EXPECT(token.type, TYPE_LBRACKET);
-            RULE(func_body());
-        } else if (token.type == TYPE_LBRACKET) {
-            item->data.func->ret.type = NONE_DT;
-            RULE(func_body());
-        } else return SYNTAX_ERROR;
-        return NO_ERRORS;
-    } else {
-        if (item->type == func) return SEMANTIC_DEF_ERROR;
-    }
+        EXPECT(token.type, TYPE_LBRACKET);
+        RULE(func_body());
+    } else if (token.type == TYPE_LBRACKET) {
+        item->data.func->ret.type = NONE_DT;
+        RULE(func_body());
+    } else return SYNTAX_ERROR;
 
     return NO_ERRORS;
 }
@@ -202,6 +207,7 @@ int parameter() {
 
     // Add a variable to local function symtable
     code = symt_add_var(&lTable, &tmpTokenId, tmp);
+    EXPECT_ERROR(code);
     GET_TOKEN();
     RULE(parameters_list_more());
     return NO_ERRORS;
@@ -297,9 +303,81 @@ int var_def() {
 
 int expression(){
     // token id here
-//    if (inFunc) { // if we are in function then we can find defined id in htable: var in local, func in global
+    // save first token id
+    str_copy(&token.attribute.id, &tmpTokenId);
 
-//    }
+    GET_TOKEN();
+
+    if (token.type == TYPE_LPAR) { // if it's ( then we are trying to call a function
+        item = symt_search(&gTable, &tmpTokenId);
+        if (item == NULL) { // no function id in symtable, save the call, if it won't be defined then semantic error
+
+            RULE(call_parameters_list(false));
+
+            GET_TOKEN();
+            if (token.type == TYPE_ID) {
+                str_copy(&token.attribute.id, &tmpTokenId); // possible callId saved in tmpTokenId
+                GET_TOKEN();
+                if (token.type == TYPE_COLON) {
+                    // foo(with: param) case
+                } else if (token.type == TYPE_COMMA) {
+
+                }
+                if (inFunc) {
+                    item = symt_search(&lTable, &token.attribute.id);
+                    if (item == NULL) {
+                        item = symt_search(&gTable, &token.attribute.id);
+                        if (item == NULL) return SEMANTIC_UNDEF_VAR_ERROR;
+                    }
+                }
+            }
+        } else { // function is defined
+            if (item->type == var) {
+                return SEMANTIC_DEF_ERROR;
+            } else {
+                RULE(call_parameters_list(true));
+            }
+        }
+    }
+
+    if (inFunc) { // if we are in function then we can find defined id in htable: var in local, func in global
+
+    }
+    return NO_ERRORS;
+}
+
+//<call_parameters_list> ::= <call_parameter> <call_parameters_list_more> | ε
+int call_parameters_list(bool defined) {
+    debug("Rule: call_parameters_list");
+    GET_TOKEN();
+    if (token.type == TYPE_RPAR) {
+        if (!defined) {
+            symt_add_func_call(&gTable, &item->key, 0, NULL);
+            GET_TOKEN();
+            return NO_ERRORS;
+        } else {
+            // TODO: expand func call
+            if (item->data.func->argc == 0) {
+                GET_TOKEN();
+                return NO_ERRORS;
+            }
+            else return SEMANTIC_CALL_RET_ERROR;
+        }
+    } else if (token.type == TYPE_ID || is_token_const(token.type)) {
+        if (params) free(params);
+        callArgc = 1;
+        params = malloc(callArgc * sizeof(parser_call_parameter_t));
+        RULE(call_parameter());
+        return NO_ERRORS;
+    } else {
+        return SYNTAX_ERROR;
+    }
+}
+
+int call_parameter() {
+    // parser_call_parameter_t *params;
+    // int callArgc;
+    debug("Rule: call_parameter");
     return NO_ERRORS;
 }
 
@@ -315,6 +393,10 @@ int parse() {
     // We are in the main body of a program
     inFunc = false;
     return statement_list();
+}
+
+bool is_token_const(token_type_t type) {
+    return type < 3;
 }
 
 int kw_to_type(keyword_t kw, datatype_t *datatype) {
