@@ -20,14 +20,17 @@ typedef enum types {
     DOUBLE_DT,          // Double
     STRING_DT,          // String
     NIL_DT,             // nil
-    INTEGER_N_DT,       // Int?
-    DOUBLE_N_DT,        // Double?
-    STRING_N_DT,        // String?
     NONE_DT             // For functions with no return datatype
 } types_t;
 
-typedef struct var_attr {
+typedef struct datatype {
     types_t type;
+    // if ? then nullable is true, otherwise false
+    bool nullable;
+} datatype_t;
+
+typedef struct var_attr {
+    datatype_t type;
     token_attribute_t attr;
     // variable defined with keyword var => mutable = true
     // variable defined with keyword let => mutable = false
@@ -37,11 +40,11 @@ typedef struct var_attr {
 typedef struct param {
     string_t callId;
     string_t inFuncId;
-    types_t type;
+    datatype_t type;
 } param_t;
 
 typedef struct func_attr {
-    types_t ret;        // Function return type
+    datatype_t ret;        // Function return type
     int argc;           // Amount of func parameters and at the same time curr index of argv array
     param_t *argv;      // Array of parameters
 } symt_func_t;
@@ -104,7 +107,7 @@ int symt_add_func(htable *table, string_t *key);
  * @param type Parameter type
  * @return NO_ERRORS if successful, otherwise error code
  */
-int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, types_t type);
+int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, datatype_t type);
 
 /**
  * Initialize item type 'variable' in the table
@@ -112,7 +115,7 @@ int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, type
  * @param key item key
  * @return NO_ERRORS if successful, otherwise error code
  */
-int symt_add_var(htable *table, string_t *key, types_t type);
+int symt_add_var(htable *table, string_t *key, datatype_t type);
 
 /**
  * Search for an item in hashtable

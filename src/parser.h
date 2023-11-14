@@ -24,8 +24,8 @@
 
 #define GET_TOKEN()                 \
     code = get_token(&token);          \
-    debug("Token: %s", token_type_to_string(token.type));                                        \
-    if((code) != NO_ERRORS) return code;    \
+    debug("Token: %s", token_type_to_string(token.type)); \
+    EXPECT_ERROR(code);                                \
 
 
 #define EXPECT(current, expected) \
@@ -49,6 +49,6 @@ int parameter();
 int parameters_list_more();
 int func_body();
 
-int kw_to_type(keyword_t kw);
+int kw_to_type(keyword_t kw, datatype_t *datatype);
 
 #endif // PARSER_H

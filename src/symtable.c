@@ -69,7 +69,7 @@ int symt_add_func(htable *table, string_t *key) {
     }
 }
 
-int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, types_t type) {
+int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, datatype_t type) {
     item->data.func->argc++;
     item->data.func->argv = (param_t *)realloc(item->data.func->argv, item->data.func->argc * sizeof(param_t));
     if (item->data.func->argv == NULL) {
@@ -88,7 +88,7 @@ int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, type
     return NO_ERRORS;
 }
 
-int symt_add_var(htable *table, string_t *key, types_t type) {
+int symt_add_var(htable *table, string_t *key, datatype_t type) {
     // Redefinice proměnné v témže bloku vede na chybu 3.
     ht_item_t *item = symt_search(table, key);
     if (item && item->type == var) {

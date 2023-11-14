@@ -46,7 +46,9 @@ int while_statement() {
 int statement_list() {
     debug("<statement_list> ::= <statement> <statement_list>");
     if (token.type == TYPE_EOF) {
-        return inFunc ? SYNTAX_ERROR : NO_ERRORS;
+        if (inFunc) {
+            return SYNTAX_ERROR;
+        }
     }
 
     // other statements:
@@ -59,7 +61,7 @@ int statement_list() {
 
     if (token.type == TYPE_RBRACKET) {
         if (inFunc) {
-            if (item->data.func->ret == NONE_DT || seenReturn) {
+            if (item->data.func->ret.type == NONE_DT || seenReturn) {
                 seenReturn = false;
                 inFunc = false;
                 return NO_ERRORS;
@@ -131,14 +133,13 @@ int func_def() {
         if (token.type == TYPE_ARROW) {
             GET_TOKEN();
             EXPECT(token.type, TYPE_KW);
-            int type = kw_to_type(token.attribute.keyword);
-            if (type == OTHER_ERROR) return SYNTAX_ERROR;
-            item->data.func->ret = type;
+            code = kw_to_type(token.attribute.keyword, &item->data.func->ret);
+            EXPECT_ERROR(code);
             GET_TOKEN();
             EXPECT(token.type, TYPE_LBRACKET);
             RULE(func_body());
         } else if (token.type == TYPE_LBRACKET) {
-            item->data.func->ret = NONE_DT;
+            item->data.func->ret.type = NONE_DT;
             RULE(func_body());
         } else return SYNTAX_ERROR;
         return NO_ERRORS;
@@ -197,13 +198,14 @@ int parameter() {
     EXPECT(token.type, TYPE_COLON);
     GET_TOKEN();
     EXPECT(token.type, TYPE_KW);
-    int type = kw_to_type(token.attribute.keyword);
-    if (type  == OTHER_ERROR) return SYNTAX_ERROR;
-    code = symt_add_func_param(item, &toCall, &tmpTokenId, type);
-    if (code != NO_ERRORS) return code;
+    datatype_t tmp;
+    code = kw_to_type(token.attribute.keyword, &tmp);
+    EXPECT_ERROR(code);
+    code = symt_add_func_param(item, &toCall, &tmpTokenId, tmp);
+    EXPECT_ERROR(code);
 
     // Add a variable to local function symtable
-    code = symt_add_var(&lTable, &tmpTokenId, type);
+    code = symt_add_var(&lTable, &tmpTokenId, tmp);
     GET_TOKEN();
     RULE(parameters_list_more());
     return NO_ERRORS;
@@ -233,7 +235,7 @@ int return_statement() {
     // token here is keyword return
     GET_TOKEN();
     if (token.type == TYPE_RBRACKET) {
-        if (item->data.func->ret == NONE_DT) {
+        if (item->data.func->ret.type == NONE_DT) {
             return NO_ERRORS;
         }
     } // TODO other cases
@@ -254,21 +256,36 @@ int parse() {
     return statement_list();
 }
 
-int kw_to_type(keyword_t kw) {
+int kw_to_type(keyword_t kw, datatype_t *datatype) {
+    if (datatype == NULL) {
+        return OTHER_ERROR;
+    }
     switch (kw) {
         case K_DOUBLE:
-            return DOUBLE_DT;
+            datatype->type = DOUBLE_DT;
+            datatype->nullable = false;
+            return NO_ERRORS;
         case K_INT:
-            return INTEGER_DT;
+            datatype->type = INTEGER_DT;
+            datatype->nullable = false;
+            return NO_ERRORS;
         case K_STRING:
-            return STRING_DT;
+            datatype->type = STRING_DT;
+            datatype->nullable = false;
+            return NO_ERRORS;
         case K_INT_N:
-            return INTEGER_N_DT;
+            datatype->type = INTEGER_DT;
+            datatype->nullable = true;
+            return NO_ERRORS;
         case K_STRING_N:
-            return STRING_N_DT;
+            datatype->type = STRING_DT;
+            datatype->nullable = true;
+            return NO_ERRORS;
         case K_DOUBLE_N:
-            return DOUBLE_N_DT;
+            datatype->type = DOUBLE_DT;
+            datatype->nullable = true;
+            return NO_ERRORS;
         default:
-            return OTHER_ERROR;
+            return SYNTAX_ERROR;
     }
 }

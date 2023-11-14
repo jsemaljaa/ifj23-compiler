@@ -53,10 +53,10 @@ int get_token(token_t *token){
         switch (state) {
 
             case STATE_START:
-//                if (c == EOL) {
-//                    token->type = TYPE_EOL;
-//                    return NO_ERRORS;
-//                } else
+                if (c == EOL) {
+                    token->type = TYPE_EOL;
+                    return NO_ERRORS;
+                } else
                     if (c == EOF) {
                     token->type = TYPE_EOF;
                     return NO_ERRORS;
@@ -114,7 +114,7 @@ int get_token(token_t *token){
                     state = STATE_ID_KW;
                 } else if (c == '"') {
                     state = STATE_STRING_START;
-                } else if (c == EOL || isspace(c)){
+                } else if (isspace(c)){
                     state = STATE_START;
                 } else if (isdigit(c)) {
                     // check for other error 99
