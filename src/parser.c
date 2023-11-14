@@ -159,8 +159,8 @@ int parameters_list() {
 
 int parameter() {
     string_t toCall;
-    code = str_create(&toCall, STR_SIZE);
-    if (!code) return OTHER_ERROR;
+    EXEC(str_create(&toCall, STR_SIZE));
+
     // first PARAMETER_NAME
     if (token.type == TYPE_ID) {
         str_copy(&token.attribute.id, &toCall);
@@ -188,14 +188,11 @@ int parameter() {
     GET_TOKEN();
     EXPECT(token.type, TYPE_KW);
     datatype_t tmp;
-    code = kw_to_type(token.attribute.keyword, &tmp);
-    EXPECT_ERROR(code);
-    code = symt_add_func_param(item, &toCall, &tmpTokenId, tmp);
-    EXPECT_ERROR(code);
+    EXEC(kw_to_type(token.attribute.keyword, &tmp));
+    EXEC(symt_add_func_param(item, &toCall, &tmpTokenId, tmp));
 
     // Add a variable to local function symtable
-    code = symt_add_var(&lTable, &tmpTokenId, tmp);
-    EXPECT_ERROR(code);
+    EXEC(symt_add_var(&lTable, &tmpTokenId, tmp));
     GET_TOKEN();
     RULE(parameters_list_more());
     return NO_ERRORS;
@@ -260,8 +257,7 @@ int var_def() {
     if (token.type == TYPE_COLON) {
         GET_TOKEN();
         EXPECT(token.type, TYPE_KW);
-        code = kw_to_type(token.attribute.keyword, &var.type);
-        EXPECT_ERROR(code);
+        EXEC(kw_to_type(token.attribute.keyword, &var.type));
         GET_TOKEN();
     }
 
@@ -278,8 +274,7 @@ int var_def() {
         }
     }
 
-    code = symt_add_var(workingTable, &tmpTokenId, var.type);
-    EXPECT_ERROR(code);
+    EXEC(symt_add_var(workingTable, &tmpTokenId, var.type));
 
     variableItem = symt_search(workingTable, &tmpTokenId);
     variableItem->data.var->mutable = var.mutable;
@@ -297,8 +292,7 @@ int expression(){
     if (token.type == TYPE_LPAR) { // if it's ( then we are trying to call a function
         item = symt_search(&gTable, &tmpTokenId);
         if (item == NULL) { // no function id in symtable, save the call, if it won't be defined then semantic error
-            code = symt_add_func(&gTable, &tmpTokenId);
-            EXPECT_ERROR(code);
+            EXEC(symt_add_func(&gTable, &tmpTokenId));
             item = symt_search(&gTable, &tmpTokenId);
             item->data.func->isDefined = false;
             RULE(call_parameters_list());
@@ -324,14 +318,11 @@ int expression(){
             if (item->type == var) {
                 return SEMANTIC_DEF_ERROR;
             } else {
-                RULE(call_parameters_list(true));
+                RULE(call_parameters_list());
             }
         }
     }
 
-    if (inFunc) { // if we are in function then we can find defined id in htable: var in local, func in global
-
-    }
     return NO_ERRORS;
 }
 
@@ -373,8 +364,7 @@ int parse() {
         return OTHER_ERROR;
     }
 
-    code = init_func_keys();
-    EXPECT_ERROR(code);
+    EXEC(init_func_keys());
     // Get first token
     GET_TOKEN();
 
