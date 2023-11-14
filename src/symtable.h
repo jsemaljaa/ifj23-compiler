@@ -125,13 +125,17 @@ int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, data
 
 /**
  *
- * @param table
- * @param key
- * @param argc
- * @param params
+ * @param item
  * @return
  */
-int symt_add_func_call(htable *table, string_t *key, int argc, parser_call_parameter_t *params);
+int symt_add_func_call(ht_item_t *item);
+
+/**
+ *
+ * @param item
+ * @return
+ */
+int symt_zero_parameters_call(ht_item_t *item);
 
 /**
  * Initialize item type 'variable' in the table

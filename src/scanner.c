@@ -15,20 +15,20 @@ states_t state;
 
 keyword_t match_keyword(token_t *token) {
     static const char *keywords[] = {
+            "Int",
             "Double",
+            "String",
+            "Int?",
+            "Double?",
+            "String?",
+            "nil",
             "else",
             "func",
             "if",
-            "Int",
             "let",
-            "nil",
             "return",
-            "String",
             "var",
-            "while",
-            "Int?",
-            "String?",
-            "Double?"
+            "while"
     };
 
     for (keyword_t i = K_DOUBLE; i < K_DOUBLE_N; i++) {

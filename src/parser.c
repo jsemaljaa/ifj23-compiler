@@ -20,9 +20,9 @@ ht_item_t *item;
 // Temp variable for token attr id
 string_t tmpTokenId;
 
-// Temp variables for func calls
-parser_call_parameter_t *params = NULL;
-int callArgc;
+// Temp variable to check if function were defined after they were called
+string_t *funcKeys;
+int keysCnt;
 
 int if_statement() {
     // TODO
@@ -49,6 +49,7 @@ int statement_list() {
         }
     }
 
+    debug("wtf");
     // other statements:
     // 4) <statement> ::= <expression>
     // 5) <statement> ::= <func_def>
@@ -311,9 +312,12 @@ int expression(){
     if (token.type == TYPE_LPAR) { // if it's ( then we are trying to call a function
         item = symt_search(&gTable, &tmpTokenId);
         if (item == NULL) { // no function id in symtable, save the call, if it won't be defined then semantic error
-
+            code = symt_add_func(&gTable, &tmpTokenId);
+            EXPECT_ERROR(code);
+            item = symt_search(&gTable, &tmpTokenId);
+            item->data.func->isDefined = false;
             RULE(call_parameters_list(false));
-
+            return NO_ERRORS;
             GET_TOKEN();
             if (token.type == TYPE_ID) {
                 str_copy(&token.attribute.id, &tmpTokenId); // possible callId saved in tmpTokenId
@@ -351,22 +355,21 @@ int call_parameters_list(bool defined) {
     debug("Rule: call_parameters_list");
     GET_TOKEN();
     if (token.type == TYPE_RPAR) {
-        if (!defined) {
-            symt_add_func_call(&gTable, &item->key, 0, NULL);
-            GET_TOKEN();
-            return NO_ERRORS;
-        } else {
-            // TODO: expand func call
+        if (defined) {
+            // TODO: EXPAND FUNC CALL ! ! !
             if (item->data.func->argc == 0) {
                 GET_TOKEN();
                 return NO_ERRORS;
             }
             else return SEMANTIC_CALL_RET_ERROR;
+        } else {
+            code = symt_add_func_call(item);
+            EXPECT_ERROR(code);
+            symt_zero_parameters_call(item);
+            GET_TOKEN();
+            return NO_ERRORS;
         }
     } else if (token.type == TYPE_ID || is_token_const(token.type)) {
-        if (params) free(params);
-        callArgc = 1;
-        params = malloc(callArgc * sizeof(parser_call_parameter_t));
         RULE(call_parameter());
         return NO_ERRORS;
     } else {
@@ -387,12 +390,51 @@ int parse() {
         return OTHER_ERROR;
     }
 
+    code = init_func_keys();
+    EXPECT_ERROR(code);
     // Get first token
     GET_TOKEN();
 
     // We are in the main body of a program
     inFunc = false;
-    return statement_list();
+    code = statement_list();
+
+    // Memory cleaning
+
+    free_func_keys();
+    symt_free(&gTable);
+
+    debug("after cleaning");
+    return code;
+}
+
+int init_func_keys() {
+    keysCnt = 0;
+
+    // Init at least one
+    funcKeys = malloc(sizeof(string_t));
+
+    if (funcKeys == NULL) return OTHER_ERROR;
+
+    return NO_ERRORS;
+}
+
+int append_func_keys(string_t key) {
+    keysCnt++;
+    funcKeys = realloc(funcKeys, (keysCnt + 1) * sizeof(string_t));
+    if (funcKeys == NULL) return OTHER_ERROR;
+
+    funcKeys[keysCnt - 1] = key;
+
+    return NO_ERRORS;
+}
+
+void free_func_keys() {
+    for (int i = 0; i < keysCnt; i++) {
+        str_free(&funcKeys[i]);
+    }
+
+    free(funcKeys);
 }
 
 bool is_token_const(token_type_t type) {

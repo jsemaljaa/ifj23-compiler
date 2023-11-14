@@ -24,6 +24,7 @@
 #define GET_TOKEN()                 \
     code = get_token(&token);          \
     debug("Token: %s", token_type_to_string(token.type)); \
+    if (token.type == TYPE_KW) debug("KW value: %s", keyword_to_string(token.attribute.keyword));                                \
     EXPECT_ERROR(code);                                \
 
 
@@ -54,5 +55,7 @@ int save_func_call();
 
 int kw_to_type(keyword_t kw, datatype_t *datatype);
 bool is_token_const(token_type_t type);
+int init_func_keys();
+void free_func_keys();
 
 #endif // PARSER_H
