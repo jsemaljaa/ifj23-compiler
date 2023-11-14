@@ -20,15 +20,7 @@ ht_item_t *item;
 // Temp variable for token attr id
 string_t tmpTokenId;
 
-int expression(){
-    // TODO
-    return NO_ERRORS;
-}
 
-int var_def() {
-    // TODO
-    return NO_ERRORS;
-}
 
 int if_statement() {
     // TODO
@@ -45,6 +37,10 @@ int while_statement() {
 // <statement_list> ::= <statement> <statement_list>
 int statement_list() {
     debug("<statement_list> ::= <statement> <statement_list>");
+    while (token.type == TYPE_EOL) {
+        GET_TOKEN();
+    }
+
     if (token.type == TYPE_EOF) {
         if (inFunc) {
             return SYNTAX_ERROR;
@@ -242,6 +238,71 @@ int return_statement() {
     return NO_ERRORS;
 }
 
+int var_def() {
+    // token here is either kw let or var
+    symt_var_t var;
+
+    bool seenExpr = false;
+    var.type.type = NONE_DT;
+    if (token.attribute.keyword == K_LET) {
+        var.mutable = false;
+    } else if (token.attribute.keyword == K_VAR) {
+        var.mutable = true;
+    }
+
+    GET_TOKEN();
+    EXPECT(token.type, TYPE_ID);
+
+    htable *workingTable = inFunc ? &lTable : &gTable;
+
+    ht_item_t *variableItem = symt_search(workingTable, &token.attribute.id);
+
+    if (variableItem != NULL) {
+        return SEMANTIC_DEF_ERROR;
+    }
+
+    str_copy(&token.attribute.id, &tmpTokenId);
+
+    GET_TOKEN();
+
+    if (token.type == TYPE_COLON) {
+        GET_TOKEN();
+        EXPECT(token.type, TYPE_KW);
+        code = kw_to_type(token.attribute.keyword, &var.type);
+        EXPECT_ERROR(code);
+        GET_TOKEN();
+    }
+
+    if (token.type == TYPE_ASSIGN) {
+        // call precedence analysis here
+        seenExpr = true;
+    }
+
+    if (!seenExpr) {
+        if (var.type.type == NONE_DT) {
+            return SYNTAX_ERROR;
+        } else if (var.type.nullable) {
+            debug("Init var %s with nil", tmpTokenId.s);
+        }
+    }
+
+    code = symt_add_var(workingTable, &tmpTokenId, var.type);
+    EXPECT_ERROR(code);
+
+    variableItem = symt_search(workingTable, &tmpTokenId);
+    variableItem->data.var->mutable = var.mutable;
+
+    return NO_ERRORS;
+}
+
+int expression(){
+    // token id here
+//    if (inFunc) { // if we are in function then we can find defined id in htable: var in local, func in global
+
+//    }
+    return NO_ERRORS;
+}
+
 int parse() {
     symt_init(&gTable);
     if(!str_create(&token.attribute.id, STR_SIZE) || !str_create(&tmpTokenId, STR_SIZE)) {
@@ -284,6 +345,10 @@ int kw_to_type(keyword_t kw, datatype_t *datatype) {
         case K_DOUBLE_N:
             datatype->type = DOUBLE_DT;
             datatype->nullable = true;
+            return NO_ERRORS;
+        case K_NIL:
+            datatype->type = NIL_DT;
+            datatype->nullable = false;
             return NO_ERRORS;
         default:
             return SYNTAX_ERROR;

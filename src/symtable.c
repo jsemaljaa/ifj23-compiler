@@ -103,9 +103,7 @@ int symt_add_var(htable *table, string_t *key, datatype_t type) {
         item->data.var = malloc(sizeof(symt_var_t));
         item->data.var->type = type;
         item->data.var->mutable = false;
-        if (!str_create(&item->data.var->attr.string, STR_SIZE) || !str_create(&item->data.var->attr.id, STR_SIZE))
-            return OTHER_ERROR;
-        else return NO_ERRORS;
+        return NO_ERRORS;
     } else {
         return err;
     }
@@ -144,9 +142,6 @@ void symt_free(htable *table){
                     free(&item->data.func->argv[i]);
                 }
                 free(item->data.func);
-            } else if (item->type == var) {
-                str_clear(&item->data.var->attr.string);
-                str_clear(&item->data.var->attr.id);
             }
             str_clear(&item->key);
             free(item);

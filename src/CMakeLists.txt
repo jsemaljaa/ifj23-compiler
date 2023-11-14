@@ -3,6 +3,9 @@ set(SOURCE_FILES
         scanner.c
         str.c
         compiler.c
+        parser.c
+        symtable.c
+        symstack.c
         )
 
 # Add the 'compiler' target

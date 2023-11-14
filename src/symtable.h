@@ -31,7 +31,6 @@ typedef struct datatype {
 
 typedef struct var_attr {
     datatype_t type;
-    token_attribute_t attr;
     // variable defined with keyword var => mutable = true
     // variable defined with keyword let => mutable = false
     bool mutable;
