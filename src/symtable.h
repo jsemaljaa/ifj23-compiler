@@ -60,7 +60,8 @@ typedef struct func_attr {
     int argc;                       // Amount of func parameters and at the same time curr index of argv array
     param_t *argv;                  // Array of parameters
     parser_func_call_t *calls;      // Array of seen function calls
-    int callsCnt;
+    int callsCnt;                   // Amount of seen function calls, also the size of calls array
+    int argPos;                     // Position of argv we're working with
 } symt_func_t;
 
 // Hashtable item representation

@@ -76,14 +76,15 @@ int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, data
         return OTHER_ERROR;
     }
 
-    if (!str_create(&item->data.func->argv[item->data.func->argc - 1].callId, STR_SIZE)
-        || !str_create(&item->data.func->argv[item->data.func->argc - 1].callId, STR_SIZE)) {
+    int currArg = item->data.func->argc - 1;
+    if (!str_create(&item->data.func->argv[currArg].callId, STR_SIZE)
+        || !str_create(&item->data.func->argv[currArg].callId, STR_SIZE)) {
         return OTHER_ERROR;
     }
 
-    item->data.func->argv[item->data.func->argc - 1].type = type;
-    str_copy(&item->data.func->argv[item->data.func->argc - 1].callId, toCall);
-    str_copy(&item->data.func->argv[item->data.func->argc - 1].inFuncId, toUse);
+    item->data.func->argv[currArg].type = type;
+    str_copy(&item->data.func->argv[currArg].callId, toCall);
+    str_copy(&item->data.func->argv[currArg].inFuncId, toUse);
 
     return NO_ERRORS;
 }

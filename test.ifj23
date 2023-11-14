@@ -1,1 +1,1 @@
-func iii(a b : Int) { }
+write("hello");

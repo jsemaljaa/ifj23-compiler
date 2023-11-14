@@ -111,7 +111,7 @@ int func_def() {
     // Definice funkce nemusí lexikálně předcházet kódu pro použití této funkce, tzv. volání funkce.
 
     item = symt_search(&gTable, &token.attribute.id);
-    if (item != NULL) { // check if func is not defined, but was called previously
+    if (item != NULL) { // check if func is not defined, but perhaps was called previously
         if (item->type == var || (item->type == func && item->data.func->isDefined)) {
             return SEMANTIC_DEF_ERROR;
         }
@@ -189,6 +189,7 @@ int parameter() {
     EXPECT(token.type, TYPE_KW);
     datatype_t tmp;
     EXEC(kw_to_type(token.attribute.keyword, &tmp));
+    if (!str_cmp(&toCall, &tmpTokenId)) return SEMANTIC_OTHER_ERROR;
     EXEC(symt_add_func_param(item, &toCall, &tmpTokenId, tmp));
 
     // Add a variable to local function symtable
@@ -297,28 +298,12 @@ int expression(){
             item->data.func->isDefined = false;
             RULE(call_parameters_list());
             return NO_ERRORS;
-            GET_TOKEN();
-            if (token.type == TYPE_ID) {
-                str_copy(&token.attribute.id, &tmpTokenId); // possible callId saved in tmpTokenId
-                GET_TOKEN();
-                if (token.type == TYPE_COLON) {
-                    // foo(with: param) case
-                } else if (token.type == TYPE_COMMA) {
-
-                }
-                if (inFunc) {
-                    item = symt_search(&lTable, &token.attribute.id);
-                    if (item == NULL) {
-                        item = symt_search(&gTable, &token.attribute.id);
-                        if (item == NULL) return SEMANTIC_UNDEF_VAR_ERROR;
-                    }
-                }
-            }
         } else { // function is defined
             if (item->type == var) {
                 return SEMANTIC_DEF_ERROR;
             } else {
                 RULE(call_parameters_list());
+                item->data.func->argPos = 0;
             }
         }
     }
@@ -353,10 +338,93 @@ int call_parameters_list() {
 }
 
 int call_parameter() {
-    // parser_call_parameter_t *params;
-    // int callArgc;
+    // token here is either TYPE_ID or const
+    // first check if we're working with defined function or no
+    bool defined = item->data.func->isDefined;
+    if (defined) {
+        int currArg = item->data.func->argPos;
+        if (currArg >= item->data.func->argc) return SEMANTIC_CALL_RET_ERROR;
+        if (is_token_const(token.type)) {
+            // example: write("hello")
+            datatype_t tmp;
+            EXEC(token_type_to_datatype(token.type, &tmp));
+
+            if (!str_cmp_const(&item->data.func->argv[currArg].callId, "_")
+                || !compare_datatypes(item->data.func->argv[currArg].type, tmp))
+                return SEMANTIC_CALL_RET_ERROR;
+
+        } else if (token.type == TYPE_ID) {
+            if (!str_cmp_const(&item->data.func->argv[currArg].callId, "_")) {
+
+                // if current argument was defined with _ as parameter name
+                // then we can proceed with semantics control
+
+                EXEC(check_call_param());
+            } else { // if callId was defined then our parameter has to match this definition
+                // save current ID, so we can check the next one
+                str_copy(&token.attribute.id, &tmpTokenId);
+                if (str_cmp(&tmpTokenId, &item->data.func->argv[currArg].callId))
+                    return SEMANTIC_CALL_RET_ERROR;
+                GET_TOKEN();
+                // return syntax error if next token is not comma when it should be according to grammar rules
+                EXPECT(token.type, TYPE_COMMA);
+                GET_TOKEN();
+                // here we can have two cases: parameter "with: ID" or parameter "with: 5"
+                if (is_token_const(token.type)) {
+                    // if it's const check datatype
+                    datatype_t tmp;
+                    EXEC(token_type_to_datatype(token.type, &tmp));
+                    if (!compare_datatypes(item->data.func->argv[currArg].type, tmp)){
+                        return SEMANTIC_CALL_RET_ERROR;
+                    }
+                } else if (token.type == TYPE_ID) {
+                    EXEC(check_call_param());
+                } else return SYNTAX_ERROR;
+            }
+
+        }
+        item->data.func->argPos++;
+    }
+
+    // get next token (if no syntax error it should be , or ) token)
+    GET_TOKEN();
+    RULE(call_parameters_list_more());
     return NO_ERRORS;
 }
+
+int call_parameters_list_more() {
+    if (token.type == TYPE_COMMA) {
+        GET_TOKEN();
+        RULE(call_parameter());
+    } else if (token.type == TYPE_RPAR) {
+        GET_TOKEN();
+        return NO_ERRORS;
+    }
+    return NO_ERRORS;
+}
+
+int check_call_param() {
+    htable *workingTable = inFunc ? &lTable : &gTable;
+    // param is an argument we're trying to pass
+    ht_item_t *param = symt_search(workingTable, &token.attribute.id);
+    if (inFunc && param == NULL) { // try to find in global scope if not defined in local
+        param = symt_search(&gTable, &token.attribute.id);
+        // if not defined in global then we're trying to pass an undefined variable
+        if (param == NULL) return SEMANTIC_UNDEF_VAR_ERROR;
+    }
+
+    // check if defined ID is not a function symbol in our symtable
+    if (param->type != var) return SEMANTIC_UNDEF_VAR_ERROR;
+
+    // now we should check datatype of a variable we're passing into function
+    if (!compare_datatypes(item->data.func->argv[item->data.func->argPos].type, param->data.var->type)) {
+        return SEMANTIC_CALL_RET_ERROR;
+    }
+
+    return NO_ERRORS;
+}
+
+
 
 int parse() {
     symt_init(&gTable);
@@ -378,7 +446,6 @@ int parse() {
     symt_free(&gTable);
     str_clear(&token.attribute.id);
     str_clear(&tmpTokenId);
-    free(item);
 
     debug("after cleaning");
     return code;
@@ -413,8 +480,32 @@ void free_func_keys() {
     free(funcKeys);
 }
 
+bool compare_datatypes(datatype_t required, datatype_t passed) {
+    return (required.type == passed.type);
+}
+
 bool is_token_const(token_type_t type) {
-    return type < 3;
+    return type >= TYPE_INT && type <= TYPE_STRING;
+}
+
+int token_type_to_datatype(token_type_t type, datatype_t *datatype) {
+    if (datatype == NULL) {
+        return OTHER_ERROR;
+    }
+
+    if (is_token_const(type)) {
+        if (type == TYPE_INT) {
+            datatype->type = INTEGER_DT;
+        } else if (type == TYPE_DOUBLE) {
+            datatype->type = DOUBLE_DT;
+        } else if (type == TYPE_STRING) {
+            datatype->type = STRING_DT;
+        }
+        datatype->nullable = false;
+        return NO_ERRORS;
+    } else {
+        return SYNTAX_ERROR;
+    }
 }
 
 int kw_to_type(keyword_t kw, datatype_t *datatype) {

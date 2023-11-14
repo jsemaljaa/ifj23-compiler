@@ -27,6 +27,7 @@ int parameters_list_more();
 int func_body();
 int call_parameters_list();
 int call_parameter();
+int call_parameters_list_more();
 
 int save_func_call();
 
@@ -35,5 +36,8 @@ bool is_token_const(token_type_t type);
 int init_func_keys();
 int append_func_keys(string_t key);
 void free_func_keys();
+int token_type_to_datatype(token_type_t type, datatype_t *datatype);
+bool compare_datatypes(datatype_t required, datatype_t passed);
+int check_call_param();
 
 #endif // PARSER_H
