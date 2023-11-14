@@ -4,20 +4,22 @@
 #include "scanner.h"
 #include "log.h"
 
-#define EXPECT_ERROR(code)      \
-    if (code != NO_ERRORS) return code;  \
+#define EXPECT_ERROR(code) \
+    debug("%s: Received code: %d", __func__, code);                        \
+    if (code != NO_ERRORS) return code; \
 
 #define EXEC(func) \
+    debug("Executing %s", #func);                \
     code = (func); \
     EXPECT_ERROR(code); \
-    debug("Executing %s", #func); \
+
 
 #define RULE(func)                      \
+    debug("Applying rule %s", #func);   \
     code = (func);                      \
     EXPECT_ERROR(code);                 \
-    debug("Applying rule %s", #func);   \
 
-#define GET_TOKEN()                 \
+#define GET_TOKEN()             \
     code = get_token(&token);          \
     debug("Token: %s", token_type_to_string(token.type)); \
     if (token.type == TYPE_KW) debug("Keyword value: %s", keyword_to_string(token.attribute.keyword));                                \

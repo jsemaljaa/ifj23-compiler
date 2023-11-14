@@ -116,8 +116,7 @@ int func_def() {
             return SEMANTIC_DEF_ERROR;
         }
     } else {
-        code = symt_add_func(&gTable, &token.attribute.id);
-        EXPECT_ERROR(code);
+        EXEC(symt_add_func(&gTable, &token.attribute.id));
         item = symt_search(&gTable, &token.attribute.id);
     }
 
@@ -130,8 +129,7 @@ int func_def() {
     if (token.type == TYPE_ARROW) {
         GET_TOKEN();
         EXPECT(token.type, TYPE_KW);
-        code = kw_to_type(token.attribute.keyword, &item->data.func->ret);
-        EXPECT_ERROR(code);
+        EXEC(kw_to_type(token.attribute.keyword, &item->data.func->ret));
         GET_TOKEN();
         EXPECT(token.type, TYPE_LBRACKET);
         RULE(func_body());
