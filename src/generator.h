@@ -10,6 +10,7 @@
 #include <scanner.h>
 #include <parser.h>
 
+#define INITIAL_SIZE 128
 
 void geneneratorPrintHead();
 
