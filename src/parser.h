@@ -8,7 +8,7 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include "symtable.h"
+#include "symbstack.h"
 #include "scanner.h"
 #include "log.h"
 #include "utils.h"

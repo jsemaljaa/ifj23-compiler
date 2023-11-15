@@ -67,4 +67,34 @@
  */
 #define OTHER_ERROR 99
 
+__attribute__((unused))
+static const char* get_text_code(int code) {
+    switch (code) {
+        case NO_ERRORS:
+            return "NO_ERRORS";
+        case LEXICAL_ERROR:
+            return "LEXICAL_ERROR";
+        case SYNTAX_ERROR:
+            return "SYNTAX_ERROR";
+        case SEMANTIC_DEF_ERROR:
+            return "SEMANTIC_DEF_ERROR";
+        case SEMANTIC_CALL_RET_ERROR:
+            return "SEMANTIC_CALL_RET_ERROR";
+        case SEMANTIC_UNDEF_VAR_ERROR:
+            return "SEMANTIC_UNDEF_VAR_ERROR";
+        case SEMANTIC_EXPR_ERROR:
+            return "SEMANTIC_EXPR_ERROR";
+        case SEMANTIC_TYPE_COMP_ERROR:
+            return "SEMANTIC_TYPE_COMP_ERROR";
+        case SEMANTIC_TYPE_ERROR:
+            return "SEMANTIC_TYPE_ERROR";
+        case SEMANTIC_OTHER_ERROR:
+            return "SEMANTIC_OTHER_ERROR";
+        case OTHER_ERROR:
+            return "OTHER_ERROR";
+        default:
+            return "Unknown error code";
+    }
+}
+
 #endif //COMPILER_ERROR_H

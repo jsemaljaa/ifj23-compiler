@@ -6,8 +6,6 @@
  * @author Vinogradova Alina <xvinog00@vutbr.cz> (2022)
  */
 
-
-
 #include "symtable.h"
 
 

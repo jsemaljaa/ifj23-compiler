@@ -13,11 +13,9 @@
 extern int code;
 
 typedef struct tables_stack {
-    htable *table;
+    htable *head;
     int size;
 } ht_stack_t;
-
-void symbstack_init(ht_stack_t *symbstack);
 
 void symbstack_free(ht_stack_t *symbstack);
 
@@ -25,6 +23,6 @@ int symbstack_push(ht_stack_t *symbstack);
 
 void symbstack_pop(ht_stack_t *symbstack);
 
-ht_item_t *symbstack_seach(ht_stack_t *symbstack, string_t *key);
+ht_item_t *symbstack_search(ht_stack_t *symbstack, string_t *key);
 
 #endif //COMPILER_SYMBSTACK_H

@@ -13,7 +13,7 @@
 #include "log.h"
 
 #define EXPECT_ERROR(code) \
-    debug("Received code: %d", code)                       \
+    debug("Received: %s", get_text_code(code))                       \
     if (code != NO_ERRORS) return code; \
 
 

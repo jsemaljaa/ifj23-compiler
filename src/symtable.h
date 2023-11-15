@@ -81,6 +81,7 @@ typedef struct item {
     string_t key;
     ht_item_data_t data;
     struct ht_item *next;
+    int scope;
 } ht_item_t;
 
 typedef ht_item_t *htable[MAX_HT_SIZE];

@@ -9,10 +9,13 @@
 
 
 // Global and local symbols table
-htable gTable, lTable;
+htable gTable;
+ht_stack_t localTables;
+
+// Current scope, 0 for global
+int scope = 0;
 // Current token from scanner
 token_t token;
-bool inFunc;
 bool seenReturn = false;
 int ret, code;
 // Temp variable for current htable item
@@ -41,7 +44,7 @@ int statement_list() {
     }
 
     if (token.type == TYPE_EOF) {
-        if (inFunc) {
+        if (scope != 0) {
             // if function body never reached } token
             return SYNTAX_ERROR;
         }
@@ -59,10 +62,11 @@ int statement_list() {
     // 9) <statement> ::= while <expression> { <statement_list> }
 
     if (token.type == TYPE_RBRACKET) {
-        if (inFunc) {
+        if (scope != 0) {
             if (item->data.func->ret.type == NONE_DT || seenReturn) {
                 seenReturn = false;
-                inFunc = false;
+                scope--;
+                symbstack_pop(&localTables);
                 GET_TOKEN();
                 return statement_list();
             } else {
@@ -75,7 +79,7 @@ int statement_list() {
     } else if (token.type == TYPE_KW) {
         switch (token.attribute.keyword) {
             case K_FUNC:
-                if (!inFunc) {
+                if (scope == 0) {
                     RULE(func_def());
                 } else {
                     return SEMANTIC_DEF_ERROR;
@@ -92,7 +96,7 @@ int statement_list() {
                 RULE(while_statement());
                 return statement_list();
             case K_RETURN:
-                if (!inFunc) {
+                if (scope == 0) {
                     return SYNTAX_ERROR;
                 } else {
                     RULE(return_statement());
@@ -127,6 +131,11 @@ int func_def() {
     // after this fork we will have function struct in item
     GET_TOKEN();
     EXPECT(token.type, TYPE_LPAR);
+
+    scope++;
+    EXEC(symbstack_push(&localTables));
+    item->scope = scope;
+
     RULE(parameters_list());
 
     if (token.type == TYPE_ARROW) {
@@ -135,18 +144,17 @@ int func_def() {
         EXEC(kw_to_type(token.attribute.keyword, &item->data.func->ret));
         GET_TOKEN();
         EXPECT(token.type, TYPE_LBRACKET);
-        RULE(func_body());
     } else if (token.type == TYPE_LBRACKET) {
         item->data.func->ret.type = NONE_DT;
-        RULE(func_body());
     } else return SYNTAX_ERROR;
+
+    RULE(func_body());
 
     return NO_ERRORS;
 }
 
 // <parameters_list> ::= <parameter> <parameters_list_more> | ε
 int parameters_list() {
-    symt_init(&lTable);
     GET_TOKEN();
     if (token.type == TYPE_RPAR) {
         GET_TOKEN();
@@ -195,13 +203,15 @@ int parameter() {
     if (!str_cmp(&toCall, &tmpTokenId)) return SEMANTIC_OTHER_ERROR;
     EXEC(symt_add_func_param(item, &toCall, &tmpTokenId, tmp));
     debug("tmptokenid: %s", tmpTokenId.s);
-
+    htable *workingTable = &localTables.head[scope - 1];
     // Add a variable to local function symtable
-    ht_item_t *sVar = symt_search(&lTable, &tmpTokenId);
+    ht_item_t *sVar = symt_search(workingTable, &tmpTokenId);
     if (sVar && sVar->type == var) {
         return SEMANTIC_DEF_ERROR;
     }
-    EXEC(symt_add_var(&lTable, &tmpTokenId, tmp));
+    EXEC(symt_add_var(workingTable, &tmpTokenId, tmp));
+    sVar = symt_search(workingTable, &tmpTokenId);
+    sVar->data.var->mutable = false;
     str_free(&toCall);
     GET_TOKEN();
     RULE(parameters_list_more());
@@ -220,7 +230,6 @@ int parameters_list_more() {
 }
 
 int func_body() {
-    inFunc = true;
     GET_TOKEN();
     RULE(statement_list());
     return NO_ERRORS;
@@ -252,11 +261,17 @@ int var_def() {
     GET_TOKEN();
     EXPECT(token.type, TYPE_ID);
 
-    htable *workingTable = inFunc ? &lTable : &gTable;
+    ht_item_t *varItem;
+    htable *workingTable;
+    if (scope != 0) {
+        varItem = symbstack_search(&localTables, &token.attribute.id);
+        workingTable = &localTables.head[scope - 1];
+    } else {
+        varItem = symt_search(&gTable, &token.attribute.id);
+        workingTable = &gTable;
+    }
 
-    ht_item_t *variableItem = symt_search(workingTable, &token.attribute.id);
-
-    if (variableItem != NULL) {
+    if (varItem != NULL) {
         return SEMANTIC_DEF_ERROR;
     }
 
@@ -286,8 +301,8 @@ int var_def() {
 
     EXEC(symt_add_var(workingTable, &tmpTokenId, var.type));
 
-    variableItem = symt_search(workingTable, &tmpTokenId);
-    variableItem->data.var->mutable = var.mutable;
+    varItem = symt_search(workingTable, &tmpTokenId);
+    varItem->data.var->mutable = var.mutable;
 
     return NO_ERRORS;
 }
@@ -411,16 +426,24 @@ int call_parameters_list_more() {
 }
 
 int check_call_param() {
-    htable *workingTable = inFunc ? &lTable : &gTable;
-    // param is an argument we're trying to pass
-    ht_item_t *param = symt_search(workingTable, &token.attribute.id);
-    if (inFunc && param == NULL) { // try to find in global scope if not defined in local
-        param = symt_search(&gTable, &token.attribute.id);
-        // if not defined in global then we're trying to pass an undefined variable
+    ht_item_t *param = NULL;
+
+    // first try to find in global symtable
+    param = symt_search(&gTable, &token.attribute.id);
+
+    // if param is NULL we can try to find it in local symtables
+    // if param is not NULL we still should check if there's any locally defined variables that could cover a global one
+
+    ht_item_t *loc = symbstack_search(&localTables, &token.attribute.id);
+
+    // check if call parameter variable is defined
+    // and if it is then check the id is not defined as function
+    if (loc == NULL) {
         if (param == NULL) return SEMANTIC_UNDEF_VAR_ERROR;
+    } else {
+        param = loc;
     }
 
-    // check if defined ID is not a function symbol in our symtable
     if (param->type != var) return SEMANTIC_UNDEF_VAR_ERROR;
 
     // now we should check datatype of a variable we're passing into function
@@ -443,7 +466,6 @@ int parse() {
     GET_TOKEN();
 
     // We are in the main body of a program
-    inFunc = false;
     code = statement_list();
 
     // Memory cleaning
