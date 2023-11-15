@@ -68,7 +68,7 @@ int symt_add_func(htable *table, string_t *key) {
     }
 }
 
-int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, datatype_t type) {
+int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, symt_var_t var) {
     item->data.func->argc++;
     item->data.func->argv = (param_t *)realloc(item->data.func->argv, item->data.func->argc * sizeof(param_t));
     if (item->data.func->argv == NULL) {
@@ -77,26 +77,34 @@ int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, data
 
     int currArg = item->data.func->argc - 1;
     EXEC_STR(str_create(&item->data.func->argv[currArg].callId, STR_SIZE));
-    EXEC_STR(str_create(&item->data.func->argv[currArg].inFuncId, STR_SIZE));
+    EXEC_STR(str_create(&item->data.func->argv[currArg].id, STR_SIZE));
 
-    item->data.func->argv[currArg].type = type;
+    item->data.func->argv[currArg].attr = var;
     EXEC_STR(str_copy(toCall, &item->data.func->argv[currArg].callId));
-    EXEC_STR(str_copy(toUse, &item->data.func->argv[currArg].inFuncId));
+    EXEC_STR(str_copy(toUse, &item->data.func->argv[currArg].id));
 
     return NO_ERRORS;
 }
 
-int symt_add_func_call_param(ht_item_t *item, string_t *callId, symt_var_t var) {
+int symt_add_func_call_param(ht_item_t *item, string_t *callId, string_t *id, symt_var_t attr) {
     int currCall = item->data.func->callsCnt - 1;
+    if (item->data.func->calls[currCall].argc == 0) {
+        // if first parameter in this call then init
+        item->data.func->calls[currCall].params = malloc(sizeof(param_t));
+    }
     item->data.func->calls[currCall].argc++;
     int currParam = item->data.func->calls[currCall].argc - 1;
-    item->data.func->calls[currCall].params = realloc(item->data.func->calls[currCall].params, item->data.func->calls[currCall].argc * sizeof(parser_call_parameter_t));
-    if (item->data.func->calls[currCall].params == NULL) return OTHER_ERROR;
 
+    item->data.func->calls[currCall].params = realloc(item->data.func->calls[currCall].params, currParam + 1 * sizeof(param_t));
+    if (item->data.func->calls[currCall].params == NULL) return OTHER_ERROR;
     EXEC_STR(str_create(&item->data.func->calls[currCall].params[currParam].callId, STR_SIZE));
+    EXEC_STR(str_create(&item->data.func->calls[currCall].params[currParam].id, STR_SIZE));
+    debug("aaaaaaaaaaaaa");
 
     EXEC_STR(str_copy(callId, &item->data.func->calls[currCall].params[currParam].callId));
-    item->data.func->calls[currCall].params[currParam].var = var;
+    EXEC_STR(str_copy(id, &item->data.func->calls[currCall].params[currParam].id));
+
+    item->data.func->calls[currCall].params[currParam].attr = attr;
 
     return NO_ERRORS;
 }
@@ -108,6 +116,11 @@ int symt_add_func_call(ht_item_t *item) {
     if (item->data.func->calls == NULL) return OTHER_ERROR;
 
     return NO_ERRORS;
+}
+
+void symt_remove_func_call(ht_item_t *item) {
+    free(&item->data.func->calls[item->data.func->callsCnt - 1]);
+    item->data.func->callsCnt--;
 }
 
 int symt_zero_parameters_call(ht_item_t *item) {
@@ -162,7 +175,7 @@ void symt_free(htable *table){
             if (item->type == func) {
                 for (int i = 0; i < item->data.func->argc - 1; i++) {
                     str_clear(&item->data.func->argv[i].callId);
-                    str_clear(&item->data.func->argv[i].inFuncId);
+                    str_clear(&item->data.func->argv[i].id);
                     free(&item->data.func->argv[i]);
                 }
                 free(item->data.func);

@@ -12,6 +12,6 @@ int main(){
 
 
     // On error
-    printf("Exit with code: %d\n", err);
+    printf("Exit: %s\n", get_text_code(err));
     return err;
 }

@@ -39,5 +39,7 @@ void free_func_keys();
 int token_type_to_datatype(token_type_t type, datatype_t *datatype);
 bool compare_datatypes(datatype_t required, datatype_t passed);
 int check_call_param();
+ht_item_t *find_var_in_symtables(string_t *key);
+int save_func_call_param();
 
 #endif // PARSER_H

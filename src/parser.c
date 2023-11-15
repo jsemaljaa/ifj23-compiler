@@ -48,9 +48,7 @@ int statement_list() {
             // if function body never reached } token
             return SYNTAX_ERROR;
         }
-
         // here we also have to check if all the functions that were called were also defined
-
     }
 
     // other statements:
@@ -198,8 +196,9 @@ int parameter() {
     EXPECT(token.type, TYPE_COLON);
     GET_TOKEN();
     EXPECT(token.type, TYPE_KW);
-    datatype_t tmp;
-    EXEC(kw_to_type(token.attribute.keyword, &tmp));
+    symt_var_t tmp;
+    tmp.mutable = false;
+    EXEC(kw_to_type(token.attribute.keyword, &tmp.type));
     if (!str_cmp(&toCall, &tmpTokenId)) return SEMANTIC_OTHER_ERROR;
     EXEC(symt_add_func_param(item, &toCall, &tmpTokenId, tmp));
     debug("tmptokenid: %s", tmpTokenId.s);
@@ -209,7 +208,7 @@ int parameter() {
     if (sVar && sVar->type == var) {
         return SEMANTIC_DEF_ERROR;
     }
-    EXEC(symt_add_var(workingTable, &tmpTokenId, tmp));
+    EXEC(symt_add_var(workingTable, &tmpTokenId, tmp.type));
     sVar = symt_search(workingTable, &tmpTokenId);
     sVar->data.var->mutable = false;
     str_free(&toCall);
@@ -307,6 +306,82 @@ int var_def() {
     return NO_ERRORS;
 }
 
+int save_func_call_more() {
+    if (token.type == TYPE_COMMA) {
+        GET_TOKEN();
+        RULE(save_func_call_param());
+    } else if (token.type == TYPE_RPAR) {
+        GET_TOKEN();
+        return NO_ERRORS;
+    } else return SYNTAX_ERROR;
+
+    return NO_ERRORS;
+}
+
+int save_func_call_param() {
+    // save id so after we can decide if it's name or id
+    symt_var_t tmp;
+    datatype_t dt;
+    string_t undersc;
+    EXEC(str_create(&undersc, STR_SIZE));
+    EXEC(str_append(&undersc, '_'));
+    if (is_token_const(token.type)) {
+        tmp.mutable = false;
+        EXEC(token_type_to_datatype(token.type, &dt));
+        tmp.type = dt;
+        // if callId == NULL && id == NULL we're passing const ! ! !
+        EXEC(symt_add_func_call_param(item, &undersc, &undersc, tmp));
+        GET_TOKEN();
+        EXEC(save_func_call_more());
+    } else if (token.type == TYPE_ID) {
+        EXEC(str_copy(&token.attribute.id, &tmpTokenId));
+        GET_TOKEN();
+        if (token.type == TYPE_COLON) {
+            // if we found colon then next token is param and tmpTokenId is callId
+            GET_TOKEN();
+            EXPECT(token.type, TYPE_ID);
+            ht_item_t *var = find_var_in_symtables(&token.attribute.id);
+            if (var == NULL) return SEMANTIC_UNDEF_VAR_ERROR;
+            tmp.type = var->data.var->type;
+            tmp.mutable = var->data.var->mutable;
+            EXEC(symt_add_func_call_param(item, &tmpTokenId, &token.attribute.id, tmp));
+            GET_TOKEN();
+            EXEC(save_func_call_more());
+        } else if (token.type == TYPE_COMMA || token.type == TYPE_RPAR) {
+            // tmpTokenId has parameter name
+            ht_item_t *var = find_var_in_symtables(&tmpTokenId);
+            if (var == NULL) return SEMANTIC_UNDEF_VAR_ERROR;
+            tmp.type = var->data.var->type;
+            tmp.mutable = var->data.var->mutable;
+            EXEC(symt_add_func_call_param(item, &undersc, &tmpTokenId, tmp));
+            EXEC(save_func_call_more());
+        } else return SYNTAX_ERROR;
+    } else return SYNTAX_ERROR;
+    str_free(&undersc);
+
+    return NO_ERRORS;
+}
+
+int save_func_call() {
+    // token right now is (
+    GET_TOKEN();
+    EXEC(symt_add_func_call(item));
+    if (token.type == TYPE_RPAR) {
+        EXEC(symt_zero_parameters_call(item));
+    } else if (token.type == TYPE_ID || is_token_const(token.type)) {
+        EXEC(save_func_call_param());
+        // ht_item_t *item, string_t *callId, symt_var_t var
+        // symt_add_func_call_param
+    } else {
+        symt_remove_func_call(item);
+        return SYNTAX_ERROR;
+    }
+    keysCnt++;
+    EXEC(append_func_keys(item->key));
+    GET_TOKEN();
+    return NO_ERRORS;
+}
+
 int expression(){
     // token id here
     // save first token id
@@ -320,7 +395,11 @@ int expression(){
             EXEC(symt_add_func(&gTable, &tmpTokenId));
             item = symt_search(&gTable, &tmpTokenId);
             item->data.func->isDefined = false;
-            RULE(call_parameters_list());
+            EXEC(save_func_call());
+//            RULE(call_parameters_list());
+            return NO_ERRORS;
+        } else if (!item->data.func->isDefined) { // function is not defined
+            EXEC(save_func_call());
             return NO_ERRORS;
         } else { // function is defined
             if (item->type == var) {
@@ -346,19 +425,19 @@ int call_parameters_list() {
                 return NO_ERRORS;
             }
             else return SEMANTIC_CALL_RET_ERROR;
-        } else {
-            EXEC(symt_add_func_call(item));
-            EXEC(symt_zero_parameters_call(item));
-            EXEC(append_func_keys(item->key));
-            GET_TOKEN();
-            return NO_ERRORS;
         }
     } else if (token.type == TYPE_ID || is_token_const(token.type)) {
-        RULE(call_parameter());
-        return NO_ERRORS;
+        if (item->data.func->isDefined) {
+            RULE(call_parameter());
+            return NO_ERRORS;
+        } else {
+
+        }
     } else {
         return SYNTAX_ERROR;
     }
+
+    return NO_ERRORS;
 }
 
 int call_parameter() {
@@ -374,7 +453,7 @@ int call_parameter() {
             EXEC(token_type_to_datatype(token.type, &tmp));
 
             if (!str_cmp_const(&item->data.func->argv[currArg].callId, "_")
-                || !compare_datatypes(item->data.func->argv[currArg].type, tmp))
+                || !compare_datatypes(item->data.func->argv[currArg].attr.type, tmp))
                 return SEMANTIC_CALL_RET_ERROR;
 
         } else if (token.type == TYPE_ID) {
@@ -396,14 +475,13 @@ int call_parameter() {
                     // if it's const check datatype
                     datatype_t tmp;
                     EXEC(token_type_to_datatype(token.type, &tmp));
-                    if (!compare_datatypes(item->data.func->argv[currArg].type, tmp)){
+                    if (!compare_datatypes(item->data.func->argv[currArg].attr.type, tmp)){
                         return SEMANTIC_CALL_RET_ERROR;
                     }
                 } else if (token.type == TYPE_ID) {
                     EXEC(check_call_param());
                 } else return SYNTAX_ERROR;
             }
-
         }
         item->data.func->argPos++;
     }
@@ -426,28 +504,11 @@ int call_parameters_list_more() {
 }
 
 int check_call_param() {
-    ht_item_t *param = NULL;
-
-    // first try to find in global symtable
-    param = symt_search(&gTable, &token.attribute.id);
-
-    // if param is NULL we can try to find it in local symtables
-    // if param is not NULL we still should check if there's any locally defined variables that could cover a global one
-
-    ht_item_t *loc = symbstack_search(&localTables, &token.attribute.id);
-
-    // check if call parameter variable is defined
-    // and if it is then check the id is not defined as function
-    if (loc == NULL) {
-        if (param == NULL) return SEMANTIC_UNDEF_VAR_ERROR;
-    } else {
-        param = loc;
-    }
-
-    if (param->type != var) return SEMANTIC_UNDEF_VAR_ERROR;
+    ht_item_t *param = find_var_in_symtables(&token.attribute.id);
+    if (param == NULL) return SEMANTIC_UNDEF_VAR_ERROR;
 
     // now we should check datatype of a variable we're passing into function
-    if (!compare_datatypes(item->data.func->argv[item->data.func->argPos].type, param->data.var->type)) {
+    if (!compare_datatypes(item->data.func->argv[item->data.func->argPos].attr.type, param->data.var->type)) {
         return SEMANTIC_CALL_RET_ERROR;
     }
 
@@ -476,6 +537,32 @@ int parse() {
     str_clear(&tmpTokenId);
     debug("after cleaning");
     return code;
+}
+
+ht_item_t *find_var_in_symtables(string_t *key) {
+    ht_item_t *global = NULL;
+
+    // first try to find in global symtable
+    global = symt_search(&gTable, key);
+
+    // if param is NULL we can try to find it in local symtables
+    // if param is not NULL we still should check if there's any locally defined variables that could cover a global one
+
+    ht_item_t *local = symbstack_search(&localTables, key);
+
+    // check if call parameter variable is defined
+    // and if it is then check the id is not defined as function
+    if (local == NULL) {
+        // not defined in whole program
+        if (global == NULL) return NULL;
+    } else {
+        global = local;
+    }
+
+    // id defined but it's not var type of symbol
+    if (global->type != var) return NULL;
+
+    return global;
 }
 
 int init_func_keys() {

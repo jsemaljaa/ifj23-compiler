@@ -1,12 +1,14 @@
 func a(_ h: String, with f: Int) {}
 
+let q : String
+let b : Int
 
+i(q, b)
 
 func i() {
-
-    a(c, with: d)
     let c : String
     let d : Int
+    a(c, with: d)
 }
 
 

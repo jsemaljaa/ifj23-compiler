@@ -38,20 +38,13 @@ typedef struct var_attr {
 
 typedef struct param {
     string_t callId;
-    string_t inFuncId;
-    datatype_t type;
+    string_t id;
+    symt_var_t attr;
 } param_t;
-
-typedef struct call_parameter {
-    // bar(with: par)
-    // foo(param, "aaa")
-    string_t callId;
-    symt_var_t var;
-} parser_call_parameter_t;
 
 typedef struct func_call {
     int argc;
-    parser_call_parameter_t *params;
+    param_t *params;
 } parser_func_call_t;
 
 typedef struct func_attr {
@@ -115,15 +108,12 @@ void symt_init(htable *table);
  */
 int symt_add_func(htable *table, string_t *key);
 
-/**
- * Add a parameter to parameters list of a given function
- * @param item Pointer to the function item in symtable
- * @param toCall Parameter name used for function calls
- * @param toUse Parameter name used for inside of a function
- * @param type Parameter type
- * @return NO_ERRORS if successful, otherwise error code
- */
-int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, datatype_t type);
+
+int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, symt_var_t var);
+
+int symt_add_func_call_param(ht_item_t *item, string_t *callId, string_t *id, symt_var_t attr);
+
+void symt_remove_func_call(ht_item_t *item);
 
 /**
  *

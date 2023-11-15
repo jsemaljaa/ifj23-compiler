@@ -13,26 +13,26 @@
 #include "log.h"
 
 #define EXPECT_ERROR(code) \
-    debug("Received: %s", get_text_code(code))                       \
     if (code != NO_ERRORS) return code; \
 
-
 #define EXEC(func) \
-    debug("Executing %s", #func); \
+    debug("Executing function %s", #func)\
     code = (func); \
+    debug("Function %s received: %s", #func, get_text_code(code)); \
     EXPECT_ERROR(code); \
 
 
 #define RULE(func)                      \
     debug("Applying rule %s", #func);   \
     code = (func);                      \
+    debug("Rule <%s> returned %s", #func, get_text_code(code)); \
     EXPECT_ERROR(code);                 \
 
 #define GET_TOKEN()             \
     code = get_token(&token);          \
     debug("Token: %s", token_type_to_string(token.type)); \
-    if (token.type == TYPE_KW) debug("Keyword value: %s", keyword_to_string(token.attribute.keyword)); \
-    if (token.type == TYPE_ID) debug("ID value: %s", token.attribute.id.s)                            \
+    if (token.type == TYPE_KW) debug("\tKeyword value: %s", keyword_to_string(token.attribute.keyword)); \
+    if (token.type == TYPE_ID) debug("\tID value: %s", token.attribute.id.s)                            \
     EXPECT_ERROR(code);                                \
 
 #define EXPECT(current, expected) \
