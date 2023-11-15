@@ -82,8 +82,8 @@ int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, data
     EXEC_STR(str_create(&item->data.func->argv[currArg].inFuncId, STR_SIZE));
 
     item->data.func->argv[currArg].type = type;
-    EXEC_STR(str_copy(&item->data.func->argv[currArg].callId, toCall));
-    EXEC_STR(str_copy(&item->data.func->argv[currArg].inFuncId, toUse));
+    EXEC_STR(str_copy(toCall, &item->data.func->argv[currArg].callId));
+    EXEC_STR(str_copy(toUse, &item->data.func->argv[currArg].inFuncId));
 
     return NO_ERRORS;
 }
@@ -119,10 +119,7 @@ int symt_zero_parameters_call(ht_item_t *item) {
 
 int symt_add_var(htable *table, string_t *key, datatype_t type) {
     // Redefinice proměnné v témže bloku vede na chybu 3.
-    ht_item_t *item = symt_search(table, key);
-    if (item && item->type == var) {
-        return SEMANTIC_DEF_ERROR;
-    }
+    ht_item_t *item;
 
     int err;
     err = symt_add_symb(table, key);
@@ -165,12 +162,13 @@ void symt_free(htable *table){
         ht_item_t *item = (*table)[i];
         while (item != NULL) {
             if (item->type == func) {
-                for (int i = 0; i < item->data.func->argc; i++) {
+                for (int i = 0; i < item->data.func->argc - 1; i++) {
                     str_clear(&item->data.func->argv[i].callId);
                     str_clear(&item->data.func->argv[i].inFuncId);
                     free(&item->data.func->argv[i]);
                 }
                 free(item->data.func);
+
             }
             str_clear(&item->key);
             free(item);

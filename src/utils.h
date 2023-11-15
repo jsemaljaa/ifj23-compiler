@@ -13,11 +13,12 @@
 #include "log.h"
 
 #define EXPECT_ERROR(code) \
-    debug("%s: Received code: %d", __func__, code)                       \
+    debug("Received code: %d", code)                       \
     if (code != NO_ERRORS) return code; \
 
-// debug("Executing %s", #func);
+
 #define EXEC(func) \
+    debug("Executing %s", #func); \
     code = (func); \
     EXPECT_ERROR(code); \
 

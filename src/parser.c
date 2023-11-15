@@ -47,6 +47,7 @@ int statement_list() {
         }
 
         // here we also have to check if all the functions that were called were also defined
+
     }
 
     // other statements:
@@ -193,9 +194,15 @@ int parameter() {
     EXEC(kw_to_type(token.attribute.keyword, &tmp));
     if (!str_cmp(&toCall, &tmpTokenId)) return SEMANTIC_OTHER_ERROR;
     EXEC(symt_add_func_param(item, &toCall, &tmpTokenId, tmp));
+    debug("tmptokenid: %s", tmpTokenId.s);
 
     // Add a variable to local function symtable
+    ht_item_t *sVar = symt_search(&lTable, &tmpTokenId);
+    if (sVar && sVar->type == var) {
+        return SEMANTIC_DEF_ERROR;
+    }
     EXEC(symt_add_var(&lTable, &tmpTokenId, tmp));
+    str_free(&toCall);
     GET_TOKEN();
     RULE(parameters_list_more());
     return NO_ERRORS;
@@ -357,10 +364,8 @@ int call_parameter() {
 
         } else if (token.type == TYPE_ID) {
             if (!str_cmp_const(&item->data.func->argv[currArg].callId, "_")) {
-
                 // if current argument was defined with _ as parameter name
                 // then we can proceed with semantics control
-
                 EXEC(check_call_param());
             } else { // if callId was defined then our parameter has to match this definition
                 // save current ID, so we can check the next one
@@ -369,7 +374,7 @@ int call_parameter() {
                     return SEMANTIC_CALL_RET_ERROR;
                 GET_TOKEN();
                 // return syntax error if next token is not comma when it should be according to grammar rules
-                EXPECT(token.type, TYPE_COMMA);
+                EXPECT(token.type, TYPE_COLON);
                 GET_TOKEN();
                 // here we can have two cases: parameter "with: ID" or parameter "with: 5"
                 if (is_token_const(token.type)) {

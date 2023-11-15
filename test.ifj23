@@ -1,7 +1,6 @@
-func a(_ id: String) {}
+func a(_ h: String, with f: Int) {}
 
-let a : String
+let c : String
+let d : String
 
-a("hello")
-b("hello")
-write("jaj")
+a(c, with: d)
