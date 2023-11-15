@@ -5,6 +5,8 @@
 #ifndef COMPILER_EXPR_H
 #define COMPILER_EXPR_H
 
+#include "symtable.h"
+
 // Precedence table
 char prec_table[][16] = {
         /*                id       (        )        +        *        -        /        ??       !        ==       !=         >        >=        <         <=        $     */
@@ -30,7 +32,7 @@ char prec_table[][16] = {
 // if a is nil then b
 // if a is not nil then a
 
-typedef enum {
+typedef enum prec_symb {
     ID,     // id
     LPAR,   // (
     RPAR,   // )
@@ -47,8 +49,8 @@ typedef enum {
     LT,     // <
     LE,     // >=
     EMPTY,
-    STOP,
     NONTERM,
+    STOP,
     ERR
 } prec_symbs_t;
 

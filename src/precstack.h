@@ -29,8 +29,7 @@ typedef struct precStackItemVals{
 
 typedef struct precStackItem {
     prec_symbs_t symb;
-    types_t datatype;
-    prec_stack_item_vals_t vals;
+    datatype_t type;
     struct precStackItem *next;
 } prec_stack_item_t;
 
@@ -67,7 +66,7 @@ bool prec_stack_is_empty(prec_stack_t *stack);
  * @param datatype - datatype of a symb
  * @return If successful, returns true, else otherwise
 */
-int prec_stack_push(prec_stack_t *stack, prec_symbs_t symb, types_t datatype);
+int prec_stack_push(prec_stack_t *stack, prec_symbs_t symb, datatype_t type);
 
 /*
  * @brief Pop a symbol from the top of a stack

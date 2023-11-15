@@ -26,13 +26,13 @@ bool prec_stack_is_empty(prec_stack_t *stack) {
     return isNonterm && isEmpty;
 }
 
-int prec_stack_push(prec_stack_t *stack, prec_symbs_t symb, types_t datatype) {
+int prec_stack_push(prec_stack_t *stack, prec_symbs_t symb, datatype_t type) {
     prec_stack_item_t *item = (prec_stack_item_t *)malloc(sizeof(prec_stack_item_t));
 
     if(item == NULL) return OTHER_ERROR;
 
     item->symb = symb;
-    item->datatype = datatype;
+    item->type = type;
     item->next = stack->head;
     stack->head = item;
 

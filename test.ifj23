@@ -4,3 +4,29 @@ let c : String
 let d : String
 
 a(c, with: d)
+
+
+
+
+
+let A = 5 + 5
+
+$<E+E
+
+    case MUL_R:
+	case DIV_R:
+	case PLUS_R:
+	case MINUS_R:
+        tmp = pop
+        pop
+        symb = pop
+
+        if tmp.type == symb.type
+
+        datatype_t t;
+        t.type = symb.type
+        t.nullable = false
+
+		POP_TIMES(4);
+		prec_stack_push(&stack, NONTERM, t);
+		return NO_ERRORS;

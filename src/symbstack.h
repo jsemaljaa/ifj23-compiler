@@ -10,6 +10,8 @@
 
 #include "symtable.h"
 
+extern int code;
+
 typedef struct tables_stack {
     htable *table;
     int size;
