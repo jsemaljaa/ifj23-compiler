@@ -34,8 +34,6 @@ int while_statement() {
     return NO_ERRORS;
 }
 
-
-
 // <statement_list> ::= <statement> <statement_list>
 int statement_list() {
     while (token.type == TYPE_EOL) {
@@ -44,8 +42,11 @@ int statement_list() {
 
     if (token.type == TYPE_EOF) {
         if (inFunc) {
+            // if function body never reached } token
             return SYNTAX_ERROR;
         }
+
+        // here we also have to check if all the functions that were called were also defined
     }
 
     // other statements:
@@ -61,7 +62,8 @@ int statement_list() {
             if (item->data.func->ret.type == NONE_DT || seenReturn) {
                 seenReturn = false;
                 inFunc = false;
-                return NO_ERRORS;
+                GET_TOKEN();
+                return statement_list();
             } else {
                 return SEMANTIC_EXPR_ERROR;
             }
@@ -101,7 +103,6 @@ int statement_list() {
 
     return NO_ERRORS;
 }
-
 int func_def() {
     // check <func_header> first
     // token here is keyword with value K_FUNC
@@ -163,9 +164,9 @@ int parameter() {
 
     // first PARAMETER_NAME
     if (token.type == TYPE_ID) {
-        str_copy(&token.attribute.id, &toCall);
+        EXEC(str_copy(&token.attribute.id, &toCall));
     } else if (token.type == TYPE_UNDERSCORE) { // underscore first => skip toCall, only inFuncId exists
-        str_append(&toCall, '_');
+        EXEC(str_append(&toCall, '_'));
     } else {
         return SYNTAX_ERROR;
     }
@@ -176,9 +177,9 @@ int parameter() {
         // Při použití _ jako identifikátor parametru se tento parametr v těle funkce nepoužívá.
         // not sure how to understand this, leaving this like that rn
         str_clear(&tmpTokenId);
-        str_append(&tmpTokenId, '_');
+        EXEC(str_append(&tmpTokenId, '_'));
     } else if (token.type == TYPE_ID) { // second is ID to use inside a function
-        str_copy(&token.attribute.id, &tmpTokenId);
+        EXEC(str_copy(&token.attribute.id, &tmpTokenId));
     } else {
         return SYNTAX_ERROR;
     }
@@ -251,7 +252,7 @@ int var_def() {
         return SEMANTIC_DEF_ERROR;
     }
 
-    str_copy(&token.attribute.id, &tmpTokenId);
+    EXEC(str_copy(&token.attribute.id, &tmpTokenId));
 
     GET_TOKEN();
 
@@ -286,7 +287,7 @@ int var_def() {
 int expression(){
     // token id here
     // save first token id
-    str_copy(&token.attribute.id, &tmpTokenId);
+    EXEC(str_copy(&token.attribute.id, &tmpTokenId));
 
     GET_TOKEN();
 
@@ -362,7 +363,7 @@ int call_parameter() {
                 EXEC(check_call_param());
             } else { // if callId was defined then our parameter has to match this definition
                 // save current ID, so we can check the next one
-                str_copy(&token.attribute.id, &tmpTokenId);
+                EXEC(str_copy(&token.attribute.id, &tmpTokenId));
                 if (str_cmp(&tmpTokenId, &item->data.func->argv[currArg].callId))
                     return SEMANTIC_CALL_RET_ERROR;
                 GET_TOKEN();
@@ -428,9 +429,8 @@ int check_call_param() {
 
 int parse() {
     symt_init(&gTable);
-    if(!str_create(&token.attribute.id, STR_SIZE) || !str_create(&tmpTokenId, STR_SIZE)) {
-        return OTHER_ERROR;
-    }
+    EXEC(str_create(&token.attribute.id, STR_SIZE));
+    EXEC(str_create(&tmpTokenId, STR_SIZE));
 
     EXEC(init_func_keys());
     // Get first token

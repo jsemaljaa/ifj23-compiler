@@ -9,14 +9,31 @@
 #define COMPILER_SCANNER_H
 
 #include "str.h"
-#include "error.h"
 #include "log.h"
+
+extern int code;
+
+
+
+
+// debug("Executing %s", #func);
+//debug("%s: Received code: %d", __func__, code);
+#define EXEC_STR(func) \
+    code = (func); \
+    if (code != NO_ERRORS) return code; \
+
+
+/**
+ * FIXME
+ * I can't include utils.h here because it's breaking something in utils.h
+ * due to a circular dependency between utils.h and scanner.h, so for now I will just
+ * redefine EXEC macro here
+ * FIXME
+ */
 
 #include <stdio.h>
 #include <stdint.h>
 #include <ctype.h>
-
-//#include "dbg.h"
 
 #define EOL '\n'
 
@@ -112,7 +129,6 @@ typedef struct token {
     token_type_t type;
     token_attribute_t attribute;
 } token_t;
-
 
 /**
  *

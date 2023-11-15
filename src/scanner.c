@@ -1,5 +1,5 @@
 /*
- * compiler.c
+ * scanner.c
  *
  * @brief Implementation of lexical analysis
  * @author Alina Vinogradova <xvinog00@vutbr.cz>
@@ -31,7 +31,7 @@ keyword_t match_keyword(token_t *token) {
             "while"
     };
 
-    for (keyword_t i = K_DOUBLE; i < K_DOUBLE_N; i++) {
+    for (keyword_t i = K_INT; i < K_NONE; i++) {
         if (!str_cmp_const(&token->attribute.id, keywords[i])) {
             return i;
         }
@@ -48,7 +48,6 @@ int get_token(token_t *token){
 
     while (1) {
         c = getc(stdin);
-//        printf("char is %c\n", c);
 
         switch (state) {
 
@@ -90,9 +89,7 @@ int get_token(token_t *token){
                 } else if (c == '=') {
                     state = STATE_EQUALS;
                 } else if (c == '_') {
-                    if(!str_append(&token->attribute.id, c)) {
-                        return OTHER_ERROR;
-                    }
+                        EXEC_STR(str_append(&token->attribute.id, c));
                     state = STATE_UNDERSCORE;
                 } else if (c == '-') {
                     state = STATE_MINUS;
@@ -108,9 +105,7 @@ int get_token(token_t *token){
                     state = STATE_QUES;
                 } else if (isupper(c) || islower(c)) {
                     // check for other error 99
-                    if(!str_append(&token->attribute.id, c)) {
-                        return OTHER_ERROR;
-                    }
+                    EXEC_STR(str_append(&token->attribute.id, c));
                     state = STATE_ID_KW;
                 } else if (c == '"') {
                     state = STATE_STRING_START;
@@ -118,9 +113,7 @@ int get_token(token_t *token){
                     state = STATE_START;
                 } else if (isdigit(c)) {
                     // check for other error 99
-                    if (!str_append(&token->attribute.id, c)) {
-                        return OTHER_ERROR;
-                    }
+                    EXEC_STR(str_append(&token->attribute.id, c));
                     state = STATE_NUMBER_INTEGER;
                 }
                 break;
@@ -136,9 +129,7 @@ int get_token(token_t *token){
 
             case STATE_UNDERSCORE:
                 if (isupper(c) || islower(c) || isdigit(c)) {
-                    if (!str_append(&token->attribute.id, c)) {
-                        return OTHER_ERROR;
-                    }
+                    EXEC_STR(str_append(&token->attribute.id, c));
                     state = STATE_ID_KW;
                 } else {
                     // should probably add here
@@ -216,9 +207,7 @@ int get_token(token_t *token){
 
             case STATE_ID_KW:
                 if (c == '_' || isupper(c) || islower(c) || isdigit(c) || c == '?') {
-                    if (!str_append(&token->attribute.id, c)) {
-                        return OTHER_ERROR;
-                    }
+                    EXEC_STR(str_append(&token->attribute.id, c));
                 } else {
                     keyword_t kw = match_keyword(token);
                     ungetc(c, stdin);
@@ -239,16 +228,12 @@ int get_token(token_t *token){
                 if (c == '"') {
                     state = STATE_STRING_END;
                 } else if (c == '\\') {
-                    if (!str_append(&token->attribute.string, c)) {
-                        return OTHER_ERROR;
-                    }
+                    EXEC_STR(str_append(&token->attribute.string, c));
                     state = STATE_STRING_ESCAPE;
                 } else if (c == EOF || c < 32) {
                     return LEXICAL_ERROR;
                 } else {
-                    if (!str_append(&token->attribute.string, c)) {
-                       return OTHER_ERROR;
-                    }
+                    EXEC_STR(str_append(&token->attribute.string, c));
                 }
                 break;
 
@@ -267,23 +252,17 @@ int get_token(token_t *token){
 
             case STATE_STRING_ESCAPE:
                 if (c == '"' || c == 'n' || c == 'r' || c == 't' || c == '\\') {
-                    if (!str_append(&token->attribute.string, c)) {
-                        return OTHER_ERROR;
-                    }
+                    EXEC_STR(str_append(&token->attribute.string, c));
                     state = STATE_STRING_START;
                 } else if (c == 'u') {
-                    if (!str_append(&token->attribute.string, c)) {
-                        return OTHER_ERROR;
-                    }
+                    EXEC_STR(str_append(&token->attribute.string, c));
                     state = STATE_STRING_SEQ;
                 }
                 break;
 
             case STATE_STRING_SEQ:
                 if (c == '{') {
-                    if (!str_append(&token->attribute.string, c)) {
-                        return OTHER_ERROR;
-                    }
+                    EXEC_STR(str_append(&token->attribute.string, c));
                     state = STATE_STRING_SEQ_HEX;
                 }
                 break;
@@ -293,19 +272,14 @@ int get_token(token_t *token){
                     if (hexCnt == 0) {
                         return LEXICAL_ERROR;
                     }
-                    if (!str_append(&token->attribute.string, c)) {
-                        return OTHER_ERROR;
-                    }
+                    EXEC_STR(str_append(&token->attribute.string, c));
                     hexCnt = 0;
                     state = STATE_STRING_START;
                 } else if ((c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f') || (c >= '0' && c <= '9')) {
                     if (hexCnt > 8) {
                         return LEXICAL_ERROR;
                     }
-
-                    if (!str_append(&token->attribute.string, c)) {
-                        return OTHER_ERROR;
-                    }
+                    EXEC_STR(str_append(&token->attribute.string, c));
                     hexCnt++;
                     // counter so max 8 symbols are appended to the string
                 }
@@ -322,13 +296,13 @@ int get_token(token_t *token){
                     token->type = TYPE_INT;
                     return NO_ERRORS;
                 } else {
-                    str_append(&token->attribute.string, c);
+                    EXEC_STR(str_append(&token->attribute.string, c));
                 }
                 break;
 
             case STATE_NUMBER_DOUBLE_START:
                 if (isdigit(c)) {
-                    str_append(&token->attribute.string, c);
+                    EXEC_STR(str_append(&token->attribute.string, c));
                     state = STATE_NUMBER_DOUBLE_END;
                 } else {
                     return LEXICAL_ERROR;
@@ -337,7 +311,7 @@ int get_token(token_t *token){
 
             case STATE_NUMBER_DOUBLE_END:
                 if (isdigit(c)) {
-                    str_append(&token->attribute.string, c);
+                    EXEC_STR(str_append(&token->attribute.string, c));
                 } else {
                     ungetc(c, stdin);
                     token->attribute.floatNumber = atof(token->attribute.string.s);
@@ -348,7 +322,7 @@ int get_token(token_t *token){
 
             case STATE_NUMBER_EXP_START:
                 if (c == '+' || c == '-') {
-                    str_append(&token->attribute.string, c);
+                    EXEC_STR(str_append(&token->attribute.string, c));
                     state = STATE_NUMBER_EXP_SIGN;
                 } else {
                     return LEXICAL_ERROR;
@@ -357,7 +331,7 @@ int get_token(token_t *token){
 
             case STATE_NUMBER_EXP_SIGN:
                 if (isdigit(c)) {
-                    str_append(&token->attribute.string, c);
+                    EXEC_STR(str_append(&token->attribute.string, c));
                     state = STATE_NUMBER_EXP_END;
                 } else {
                     return LEXICAL_ERROR;
@@ -366,7 +340,7 @@ int get_token(token_t *token){
 
             case STATE_NUMBER_EXP_END:
                 if (isdigit(c)) {
-                    str_append(&token->attribute.string, c);
+                    EXEC_STR(str_append(&token->attribute.string, c));
                 } else {
                     ungetc(c, stdin);
                     token->attribute.integerNumber = atof(token->attribute.string.s);

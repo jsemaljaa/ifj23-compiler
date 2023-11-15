@@ -42,12 +42,13 @@ int symt_add_symb(htable *table, string_t *key){
 
     if(new_item == NULL) return OTHER_ERROR;
 
-    if (!str_create(&new_item->key, STR_SIZE)) {
+    int err = str_create(&new_item->key, STR_SIZE);
+    if (err != NO_ERRORS) {
         free(new_item);
         return OTHER_ERROR;
     }
 
-    str_copy(key, &new_item->key);
+    EXEC_STR(str_copy(key, &new_item->key));
     new_item->next = (struct ht_item *) (*table)[pos % MAX_HT_SIZE];
     (*table)[pos % MAX_HT_SIZE] = new_item;
 
@@ -77,14 +78,12 @@ int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, data
     }
 
     int currArg = item->data.func->argc - 1;
-    if (!str_create(&item->data.func->argv[currArg].callId, STR_SIZE)
-        || !str_create(&item->data.func->argv[currArg].callId, STR_SIZE)) {
-        return OTHER_ERROR;
-    }
+    EXEC_STR(str_create(&item->data.func->argv[currArg].callId, STR_SIZE));
+    EXEC_STR(str_create(&item->data.func->argv[currArg].inFuncId, STR_SIZE));
 
     item->data.func->argv[currArg].type = type;
-    str_copy(&item->data.func->argv[currArg].callId, toCall);
-    str_copy(&item->data.func->argv[currArg].inFuncId, toUse);
+    EXEC_STR(str_copy(&item->data.func->argv[currArg].callId, toCall));
+    EXEC_STR(str_copy(&item->data.func->argv[currArg].inFuncId, toUse));
 
     return NO_ERRORS;
 }
@@ -96,9 +95,9 @@ int symt_add_func_call_param(ht_item_t *item, string_t *callId, symt_var_t var) 
     item->data.func->calls[currCall].params = realloc(item->data.func->calls[currCall].params, item->data.func->calls[currCall].argc * sizeof(parser_call_parameter_t));
     if (item->data.func->calls[currCall].params == NULL) return OTHER_ERROR;
 
-    if (!str_create(&item->data.func->calls[currCall].params[currParam].callId, STR_SIZE)) return OTHER_ERROR;
+    EXEC_STR(str_create(&item->data.func->calls[currCall].params[currParam].callId, STR_SIZE));
 
-    str_copy(callId, &item->data.func->calls[currCall].params[currParam].callId);
+    EXEC_STR(str_copy(callId, &item->data.func->calls[currCall].params[currParam].callId));
     item->data.func->calls[currCall].params[currParam].var = var;
 
     return NO_ERRORS;

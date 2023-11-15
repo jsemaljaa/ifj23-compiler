@@ -1,15 +1,23 @@
-#ifndef UTILS_H
-#define UTILS_H
+/*
+ * utils.h
+ *
+ * @brief Declaration of helper functions and structures for compiler
+ * @author Zdeněk Němec <xnemec0d@vutbr.cz>
+ */
+
+#ifndef COMPILER_UTILS_H
+#define COMPILER_UTILS_H
+
 
 #include "scanner.h"
 #include "log.h"
 
 #define EXPECT_ERROR(code) \
-    debug("%s: Received code: %d", __func__, code);                        \
+    debug("%s: Received code: %d", __func__, code)                       \
     if (code != NO_ERRORS) return code; \
 
+// debug("Executing %s", #func);
 #define EXEC(func) \
-    debug("Executing %s", #func);                \
     code = (func); \
     EXPECT_ERROR(code); \
 
@@ -22,9 +30,9 @@
 #define GET_TOKEN()             \
     code = get_token(&token);          \
     debug("Token: %s", token_type_to_string(token.type)); \
-    if (token.type == TYPE_KW) debug("Keyword value: %s", keyword_to_string(token.attribute.keyword));                                \
+    if (token.type == TYPE_KW) debug("Keyword value: %s", keyword_to_string(token.attribute.keyword)); \
+    if (token.type == TYPE_ID) debug("ID value: %s", token.attribute.id.s)                            \
     EXPECT_ERROR(code);                                \
-
 
 #define EXPECT(current, expected) \
     if(current != expected) { \
@@ -138,4 +146,4 @@ static const char* keyword_to_string(keyword_t keyword) {
     }
 }
 
-#endif // UTILS_H
+#endif // COMPILER_UTILS_H

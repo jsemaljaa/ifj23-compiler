@@ -13,6 +13,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "error.h"
+
 //#include "dbg.h"
 
 #define STR_SIZE 20
@@ -27,33 +29,33 @@ typedef struct string {
  * Allocate string 'str' of the size 'size'
  * @param str Pointer to the string
  * @param size Size of the string to initialize
- * @return True if success, False otherwise
+ * @return NO_ERRORS if success, error code otherwise
  */
-bool str_create(string_t *str, int size);
+int str_create(string_t *str, int size);
 
 /**
  * Append a character to the end of a string
  * @param str Pointer to the string
  * @param c Character to append
- * @return True if success, False otherwise
+ * @return NO_ERRORS if success, error code otherwise
  */
-bool str_append(string_t *str, char c);
+int str_append(string_t *str, char c);
 
 /**
  * Copy string from 'src' to 'dst'
  * @param src Pointer to a source string
  * @param dst Pointer to a destination string
- * @return True if success, False otherwise
+ * @return NO_ERRORS if success, error code otherwise
  */
-bool str_copy(string_t *src, string_t *dst);
+int str_copy(string_t *src, string_t *dst);
 
 /**
  * Concatenate string 's2' at the end of the string 's1'
  * @param s1 Pointer to the first string
  * @param s2 Pointer to the second string
- * @return True if success, False otherwise
+ * @return NO_ERRORS if success, error code otherwise
  */
-bool str_concat(string_t *s1, string_t *s2);
+int str_concat(string_t *s1, string_t *s2);
 
 /**
  * Clear string
@@ -93,6 +95,6 @@ void str_free(string_t *str);
  * @param len Size to reallocate
  * @return True if success, False otherwise
  */
-bool str_realloc(string_t *str, int len);
+// bool str_realloc(string_t *str, int len);
 
 #endif //COMPILER_STR_H

@@ -10,6 +10,7 @@
 int main(){
     int err = parse();
 
+
     // On error
     printf("Exit with code: %d\n", err);
     return err;
