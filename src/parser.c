@@ -70,6 +70,7 @@ int statement_list() {
         }
     } else if (token.type == TYPE_ID) {
         RULE(expression()); // expression or func call
+        return statement_list();
     } else if (token.type == TYPE_KW) {
         switch (token.attribute.keyword) {
             case K_FUNC:
@@ -82,20 +83,20 @@ int statement_list() {
             case K_LET:
             case K_VAR:
                 RULE(var_def());
-                break;
+                return statement_list();
             case K_IF:
                 RULE(if_statement());
-                break;
+                return statement_list();
             case K_WHILE:
                 RULE(while_statement());
-                break;
+                return statement_list();
             case K_RETURN:
                 if (!inFunc) {
                     return SYNTAX_ERROR;
                 } else {
                     RULE(return_statement());
+                    return statement_list();
                 }
-                break;
             default:
                 return SYNTAX_ERROR;
         }

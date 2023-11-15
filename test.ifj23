@@ -1,3 +1,7 @@
 func a(_ id: String) {}
 
+let a : String
+
 a("hello")
+b("hello")
+write("jaj")
