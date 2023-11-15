@@ -10,9 +10,6 @@ void genPrintHead()
     printf("DEFVAR GF@%%current%%instruction\n");
     printf("MOVE GF@%%current%%instruction nil@nil\n");
     printf("DEFVAR GF@%%exists\n");
-
-    printf("MOVE GF@%%exists nil@nil\n");       //mozna chyba???
-
     printf("DEFVAR GF@%%corrtype%%1\n");
     printf("MOVE GF@%%corrtype%%1 nil@nil\n");
     printf("DEFVAR GF@%%corrtype%%2\n");
@@ -45,7 +42,36 @@ void genStackPush(token_t token)
 {
     switch (token.type)
     {
-
+    case TYPE_STRING:
+    {
+        string_t temp;
+        str_create(&temp , INITIAL_SIZE);
+        int i = 0, j = 0, c = 0;
+        char esc[5] = "";
+        while ((c = token.value.string.s[i]) != '\0')
+        {
+            if (c < 33 || c == 35 || c == 92 || c > 126)
+            {
+                str_append(&temp, '\\');
+                if (c < 0)
+                    c += 256;
+                sprintf(esc, "%03d", c);
+                for (j = 0; j < 3; j++)
+                {
+                    str_append(&temp, esc[j]);
+                }
+            }
+            else
+            {
+                str_append(&temp, c);
+            }
+            i++;
+        }
+        printf("PUSHS string@%s\n", temp.s);
+        str_free(&temp);
+        str_free(&token.value.string);
+        break;
+    }
     case TYPE_INT:
         printf("PUSHS int@%d\n", token.attribute.integerNumber);
         break;
