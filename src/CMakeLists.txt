@@ -5,7 +5,7 @@ set(SOURCE_FILES
         compiler.c
         parser.c
         symtable.c
-        symstack.c
+        precstack.c
         )
 
 # Add the 'compiler' target

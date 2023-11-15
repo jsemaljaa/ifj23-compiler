@@ -26,6 +26,10 @@ char prec_table[][16] = {
         /* $  */{'<', '<', 'e', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', 'e'},
 };
 
+// a ?? b
+// if a is nil then b
+// if a is not nil then a
+
 typedef enum {
     ID,     // id
     LPAR,   // (

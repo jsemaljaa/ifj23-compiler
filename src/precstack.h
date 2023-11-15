@@ -1,5 +1,5 @@
 /*
- * symstack.h
+ * precstack.h
  *
  * @brief Symbols stack header
  *

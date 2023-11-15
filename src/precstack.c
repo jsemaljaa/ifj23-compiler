@@ -1,12 +1,12 @@
 /*
- * symstack.c
+ * precstack.c
  *
  * @brief Symbols stack implementation
  *
  * @author Vinogradova Alina <xvinog00@vutbr.cz> (taken from IFJ22 school project)
  */
 
-#include "symstack.h"
+#include "precstack.h"
 
 void prec_stack_init(prec_stack_t *stack) {
     stack->head = NULL;

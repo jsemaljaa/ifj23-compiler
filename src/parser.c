@@ -452,7 +452,6 @@ int parse() {
     symt_free(&gTable);
     str_clear(&token.attribute.id);
     str_clear(&tmpTokenId);
-
     debug("after cleaning");
     return code;
 }
