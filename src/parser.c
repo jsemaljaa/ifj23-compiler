@@ -27,13 +27,12 @@ string_t tmpTokenId;
 string_t *funcKeys;
 int keysCnt;
 
-int if_statement() {
+int while_statement() {
     // TODO
     return NO_ERRORS;
 }
 
-int while_statement() {
-    // TODO
+int execute_calls() {
     return NO_ERRORS;
 }
 
@@ -49,6 +48,10 @@ int statement_list() {
             return SYNTAX_ERROR;
         }
         // here we also have to check if all the functions that were called were also defined
+
+        if (keysCnt != 0) {
+            EXEC(execute_calls());
+        }
     }
 
     // other statements:
@@ -396,7 +399,6 @@ int expression(){
             item = symt_search(&gTable, &tmpTokenId);
             item->data.func->isDefined = false;
             EXEC(save_func_call());
-//            RULE(call_parameters_list());
             return NO_ERRORS;
         } else if (!item->data.func->isDefined) { // function is not defined
             EXEC(save_func_call());
@@ -515,7 +517,20 @@ int check_call_param() {
     return NO_ERRORS;
 }
 
-
+int if_statement() {
+    // kw if here
+    GET_TOKEN();
+    if (token.type == TYPE_KW) {
+        if (token.attribute.keyword != K_LET) return SYNTAX_ERROR;
+        else {
+            // kw let in if expr case
+        }
+    } else {
+        // EXEC(parse_expression());
+        // prec analysis should stop when there's token { found
+    }
+    return NO_ERRORS;
+}
 
 int parse() {
     symt_init(&gTable);

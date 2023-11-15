@@ -16,7 +16,6 @@
 #include "error.h"
 #include "expr.h"
 #include "scanner.h"
-#include "str.h"
 #include "symtable.h"
 
 /*
