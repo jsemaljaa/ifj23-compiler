@@ -10,7 +10,6 @@
 
 
 #include "scanner.h"
-#include "log.h"
 
 #define EXPECT_ERROR(code) \
     if (code != NO_ERRORS) return code; \

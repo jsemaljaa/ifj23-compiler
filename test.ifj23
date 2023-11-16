@@ -1,15 +1,1 @@
-func a(_ h: String, with f: Int) {}
-
-let q : String
-let b : Int
-
-i(q, b)
-
-func i() {
-    let c : String
-    let d : Int
-    a(c, with: d)
-}
-
-
-
+let A : Int = 5

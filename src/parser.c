@@ -289,7 +289,7 @@ int var_def() {
     }
 
     if (token.type == TYPE_ASSIGN) {
-        // call precedence analysis here
+        EXEC(parse_expression(0));
         seenExpr = true;
     }
 
@@ -411,6 +411,8 @@ int expression(){
                 item->data.func->argPos = 0;
             }
         }
+    } else {
+        EXEC(parse_expression(0));
     }
 
     return NO_ERRORS;

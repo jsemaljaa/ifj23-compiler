@@ -12,6 +12,7 @@
 #include "scanner.h"
 #include "log.h"
 #include "utils.h"
+#include "expr.h"
 
 int parse();
 
