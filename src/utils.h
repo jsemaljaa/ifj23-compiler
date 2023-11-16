@@ -2,7 +2,9 @@
  * utils.h
  *
  * @brief Declaration of helper functions and structures for compiler
+ *
  * @author Zdeněk Němec <xnemec0d@vutbr.cz>
+ * @author Alina Vinogradova <xvinog00@vutbr.cz>
  */
 
 #ifndef COMPILER_UTILS_H

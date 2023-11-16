@@ -289,7 +289,7 @@ int var_def() {
     }
 
     if (token.type == TYPE_ASSIGN) {
-        EXEC(parse_expression(0));
+//        EXEC(parse_expression(0));
         seenExpr = true;
     }
 
@@ -412,7 +412,11 @@ int expression(){
             }
         }
     } else {
-        EXEC(parse_expression(0));
+        // EXEC(parse_expression(0));
+
+        // TODO: check if we can use statement 5 + 5 as expression
+
+        return SYNTAX_ERROR;
     }
 
     return NO_ERRORS;
@@ -528,7 +532,12 @@ int if_statement() {
             // kw let in if expr case
         }
     } else {
-        // EXEC(parse_expression());
+        GET_TOKEN();
+        // check for empty expression
+        if (token.type == TYPE_RBRACKET) return SYNTAX_ERROR;
+        while (token.type != TYPE_RBRACKET) GET_TOKEN();
+
+        // EXEC(parse_expression(1));
         // prec analysis should stop when there's token { found
     }
     return NO_ERRORS;
