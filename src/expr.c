@@ -25,6 +25,12 @@ int from;
 
 datatype_t dt;
 
+#define GET_TOKEN_SKIP_EOL() \
+    do {                   \
+        GET_TOKEN();       \
+        while(token.type == TYPE_EOL) GET_TOKEN();       \
+    } while(0)             \
+
 #define FILL_NONE_DT() \
     do { \
         dt.type = NONE_DT; \
@@ -143,12 +149,10 @@ bool end_of_expression() {
         }
         bool isKeyword = token.type == TYPE_KW;
         end = isKeyword || isFunc;
-    } else { // from if or while statement
-        if (token.type == TYPE_LBRACKET) {
-            end = true;
-        } else {
-            end = false;
-        }
+    } else if (from == 1) {// from if or while statement
+        end = token.type == TYPE_LBRACKET ? true : false;
+    } else if (from == 2) { // from return statement
+        end = token.type == TYPE_RBRACKET ? true : false;
     }
 
     bool isEOF = token.type == TYPE_EOF;
@@ -363,8 +367,9 @@ int analyze_symbol() {
 int parse_expression(int origin) {
     // here token type is either IF, WHILE or =
 
-    // origin = 0 if from expression
-    // origin = 1 if from statement if or while
+    // origin = 0 if from expression, end of expression is the start of next one
+    // origin = 1 if from statement if or while, end of expression is { token
+    // origin = 2 from return statement
 
     from = origin;
 
@@ -380,7 +385,7 @@ int parse_expression(int origin) {
     FILL_NONE_DT();
     prec_stack_push(&stack, EMPTY, dt);
 
-    GET_TOKEN(); // get first token
+    GET_TOKEN_SKIP_EOL(); // get first token
     if (!is_token_allowed() || end_of_expression()) return SYNTAX_ERROR;
     EXEC(get_symbol(&symb));
     EXEC(get_data_type(&symbDt));
@@ -392,7 +397,7 @@ int parse_expression(int origin) {
     head = prec_stack_head(&stack);
 
     while (!prec_stack_is_empty(&stack)) {
-        GET_TOKEN();
+        GET_TOKEN_SKIP_EOL();
         if (!is_token_allowed()) return SYNTAX_ERROR;
 
         if (end_of_expression()) {

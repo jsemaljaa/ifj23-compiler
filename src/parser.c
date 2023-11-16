@@ -14,6 +14,7 @@ ht_stack_t localTables;
 
 // Current scope, 0 for global
 int scope = 0;
+bool inFunc = false;
 // Current token from scanner
 token_t token;
 bool seenReturn = false;
@@ -44,7 +45,7 @@ int statement_list() {
 
     if (token.type == TYPE_EOF) {
         if (scope != 0) {
-            // if function body never reached } token
+            // if function body, if or while body never reached } token
             return SYNTAX_ERROR;
         }
         // here we also have to check if all the functions that were called were also defined
@@ -54,24 +55,21 @@ int statement_list() {
         }
     }
 
-    // other statements:
-    // 4) <statement> ::= <expression>
-    // 5) <statement> ::= <func_def>
-    // 6) <statement> ::= <var_def>
-    // 7) <statement> ::= <func_call>
-    // 8) <statement> ::= if <expression> { <statement_list> } else { <statement_list> }
-    // 9) <statement> ::= while <expression> { <statement_list> }
-
     if (token.type == TYPE_RBRACKET) {
         if (scope != 0) {
-            if (item->data.func->ret.type == NONE_DT || seenReturn) {
-                seenReturn = false;
-                scope--;
-                symbstack_pop(&localTables);
+            if (inFunc) {
+                if (item->data.func->ret.type == NONE_DT || seenReturn) {
+                    seenReturn = false;
+                    scope--;
+                    symbstack_pop(&localTables);
+                    GET_TOKEN();
+                    return statement_list();
+                } else {
+                    return SEMANTIC_EXPR_ERROR;
+                }
+            } else {
                 GET_TOKEN();
                 return statement_list();
-            } else {
-                return SEMANTIC_EXPR_ERROR;
             }
         }
     } else if (token.type == TYPE_ID) {
@@ -149,6 +147,7 @@ int func_def() {
         item->data.func->ret.type = NONE_DT;
     } else return SYNTAX_ERROR;
 
+    inFunc = true;
     RULE(func_body());
 
     return NO_ERRORS;
@@ -244,7 +243,12 @@ int return_statement() {
         if (item->data.func->ret.type == NONE_DT) {
             return NO_ERRORS;
         }
-    } // TODO other cases
+    } else {
+        // call expression analysis
+        // EXEC(parse_expression(2));
+        // get next token after }
+        // GET_TOKEN();
+    }
     return NO_ERRORS;
 }
 
@@ -532,14 +536,18 @@ int if_statement() {
             // kw let in if expr case
         }
     } else {
-        GET_TOKEN();
         // check for empty expression
-        if (token.type == TYPE_RBRACKET) return SYNTAX_ERROR;
-        while (token.type != TYPE_RBRACKET) GET_TOKEN();
+        if (token.type == TYPE_LBRACKET) return SYNTAX_ERROR;
+        while (token.type != TYPE_LBRACKET) GET_TOKEN();
 
         // EXEC(parse_expression(1));
         // prec analysis should stop when there's token { found
     }
+
+    scope++;
+    EXEC(symbstack_push(&localTables));
+
+    RULE(statement_list());
     return NO_ERRORS;
 }
 
