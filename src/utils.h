@@ -1,4 +1,6 @@
 /*
+ * Project: IFJ23 compiler
+ *
  * utils.h
  *
  * @brief Declaration of helper functions and structures for compiler

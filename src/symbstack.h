@@ -1,7 +1,10 @@
 /*
+ * Project: IFJ23 compiler
+ *
  * symbstack.h
  *
  * @brief Declaration of a stack of symtables
+ *
  * @author Alina Vinogradova <xvinog00@vutbr.cz>
  */
 

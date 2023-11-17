@@ -1,7 +1,10 @@
 /*
+ * Project: IFJ23 compiler
+ *
  * scanner.c
  *
  * @brief Implementation of lexical analysis
+ *
  * @author Alina Vinogradova <xvinog00@vutbr.cz>
  */
 

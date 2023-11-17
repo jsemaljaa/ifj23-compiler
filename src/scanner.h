@@ -1,7 +1,10 @@
 /*
+ * Project: IFJ23 compiler
+ *
  * scanner.h
  *
  * @brief Declaration of data structures and functions for lexical analysis
+ *
  * @author Alina Vinogradova <xvinog00@vutbr.cz>
  */
 
@@ -12,9 +15,6 @@
 #include "log.h"
 
 extern int code;
-
-
-
 
 // debug("Executing %s", #func);
 //debug("%s: Received code: %d", __func__, code);

@@ -1,10 +1,13 @@
 /*
+ * Project: IFJ23 compiler
+ *
  * expr.h
  *
  * @brief Precedence analysis declarations
  *
  * @author Vinogradova Alina <xvinog00@vutbr.cz>
  */
+
 #ifndef COMPILER_EXPR_H
 #define COMPILER_EXPR_H
 

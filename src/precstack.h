@@ -1,9 +1,11 @@
 /*
+ * Project: IFJ23 compiler
+ *
  * precstack.h
  *
  * @brief Data structure and functions representing a stack of symbols
  *
- * @author Vinogradova Alina <xvinog00@vutbr.cz> (taken from IFJ22 school project)
+ * @author Vinogradova Alina <xvinog00@vutbr.cz> (taken from IFJ22 project)
  */
 
 #ifndef COMPILER_PRECSTACK_H

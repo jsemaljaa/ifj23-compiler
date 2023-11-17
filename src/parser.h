@@ -1,18 +1,18 @@
 /*
+ * Project: IFJ23 compiler
+ *
  * parser.h
  *
  * @brief Parser declarations
+ *
  * @author Alina Vinogradova <xvinog00@vutbr.cz>
  */
 
 #ifndef PARSER_H
 #define PARSER_H
 
-#include "symbstack.h"
-#include "scanner.h"
-#include "log.h"
-#include "utils.h"
-#include "expr.h"
+
+#include "parserhelpers.h"
 
 #define SKIP_EOL() \
     do {           \

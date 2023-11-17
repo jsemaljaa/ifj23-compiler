@@ -1,3 +1,15 @@
+/*
+ * Project: IFJ23 compiler
+ *
+ * log.h
+ *
+ * @brief Debugging macros declarations
+ *
+ * @author Zdeněk Němec <xnemec0d@vutbr.cz>
+ * @author Vinogradova Alina <xvinog00@vutbr.cz>
+ */
+
+
 #ifndef LOG_H
 #define LOG_H
 

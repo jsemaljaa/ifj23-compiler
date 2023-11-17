@@ -1,7 +1,10 @@
 /*
+ * Project: IFJ23 compiler
+ *
  * compiler.c
  *
  * @brief Main module
+ *
  * @author Alina Vinogradova <xvinog00@vutbr.cz>
  */
 

@@ -1,7 +1,10 @@
 /*
+ * Project: IFJ23 compiler
+ *
  * str.c
  *
  * @brief Implementation of dynamic string data structure
+ *
  * @author Alina Vinogradova <xvinog00@vutbr.cz>
  */
 

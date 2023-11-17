@@ -1,9 +1,11 @@
 /*
+ * Project: IFJ23 compiler
+ *
  * precstack.c
  *
  * @brief Symbols stack implementation
  *
- * @author Vinogradova Alina <xvinog00@vutbr.cz> (taken from IFJ22 school project)
+ * @author Vinogradova Alina <xvinog00@vutbr.cz> (taken from IFJ22 project)
  */
 
 #include "precstack.h"

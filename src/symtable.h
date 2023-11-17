@@ -1,8 +1,11 @@
 /*
+ * Project: IFJ23 compiler
+ *
  * symtable.h
  *
  * @brief Declaration of an interface for the symbols table
- * @author Alina Vinogradova <xvinog00@vutbr.cz> (2022)
+ *
+ * @author Alina Vinogradova <xvinog00@vutbr.cz> (taken from IFJ22 project)
  */
 
 #ifndef COMPILER_SYMTABLE_H

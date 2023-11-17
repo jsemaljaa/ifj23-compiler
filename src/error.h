@@ -1,7 +1,10 @@
 /*
+ * Project: IFJ23 compiler
+ *
  * error.h
  *
  * @brief Declaration of error codes for compiler
+ *
  * @author Alina Vinogradova <xvinog00@vutbr.cz>
  */
 

@@ -1,7 +1,10 @@
 /*
+ * Project: IFJ23 compiler
+ *
  * str.h
  *
  * @brief Declaration of data structure and functions to work with dynamic string
+ *
  * @author Alina Vinogradova <xvinog00@vutbr.cz>
  */
 

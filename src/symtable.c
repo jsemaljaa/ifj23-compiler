@@ -1,9 +1,11 @@
 /*
+ * Project: IFJ23 compiler
+ *
  * symtable.c
  *
  * @brief Symbols table implementation
  *
- * @author Vinogradova Alina <xvinog00@vutbr.cz> (2022)
+ * @author Vinogradova Alina <xvinog00@vutbr.cz> (taken from IFJ22 project)
  */
 
 #include "symtable.h"
@@ -56,12 +58,16 @@ int symt_add_symb(htable *table, string_t *key){
 int symt_add_func(htable *table, string_t *key) {
     int err;
     err = symt_add_symb(table, key);
+
     if (err == NO_ERRORS) {
         ht_item_t *item = symt_search(table, key);
         item->type = func;
+
         item->data.func = malloc(sizeof(symt_func_t));
         if (item->data.func == NULL) return OTHER_ERROR;
+
         item->data.func->argc = 0;
+
         return NO_ERRORS;
     } else {
         return err;
@@ -69,17 +75,21 @@ int symt_add_func(htable *table, string_t *key) {
 }
 
 int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, symt_var_t var) {
+
     item->data.func->argc++;
+
     item->data.func->argv = (param_t *)realloc(item->data.func->argv, item->data.func->argc * sizeof(param_t));
     if (item->data.func->argv == NULL) {
         return OTHER_ERROR;
     }
 
     int currArg = item->data.func->argc - 1;
+
     EXEC_STR(str_create(&item->data.func->argv[currArg].callId, STR_SIZE));
     EXEC_STR(str_create(&item->data.func->argv[currArg].id, STR_SIZE));
 
     item->data.func->argv[currArg].attr = var;
+
     EXEC_STR(str_copy(toCall, &item->data.func->argv[currArg].callId));
     EXEC_STR(str_copy(toUse, &item->data.func->argv[currArg].id));
 
@@ -88,18 +98,21 @@ int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, symt
 
 int symt_add_func_call_param(ht_item_t *item, string_t *callId, string_t *id, symt_var_t attr) {
     int currCall = item->data.func->callsCnt - 1;
+
     if (item->data.func->calls[currCall].argc == 0) {
         // if first parameter in this call then init
         item->data.func->calls[currCall].params = malloc(sizeof(param_t));
     }
+
     item->data.func->calls[currCall].argc++;
+
     int currParam = item->data.func->calls[currCall].argc - 1;
 
     item->data.func->calls[currCall].params = realloc(item->data.func->calls[currCall].params, currParam + 1 * sizeof(param_t));
     if (item->data.func->calls[currCall].params == NULL) return OTHER_ERROR;
+
     EXEC_STR(str_create(&item->data.func->calls[currCall].params[currParam].callId, STR_SIZE));
     EXEC_STR(str_create(&item->data.func->calls[currCall].params[currParam].id, STR_SIZE));
-    debug("aaaaaaaaaaaaa");
 
     EXEC_STR(str_copy(callId, &item->data.func->calls[currCall].params[currParam].callId));
     EXEC_STR(str_copy(id, &item->data.func->calls[currCall].params[currParam].id));
@@ -111,7 +124,9 @@ int symt_add_func_call_param(ht_item_t *item, string_t *callId, string_t *id, sy
 
 int symt_add_func_call(ht_item_t *item) {
     item->data.func->callsCnt++;
+
     int callsCnt = item->data.func->callsCnt;
+
     item->data.func->calls = (parser_func_call_t *)realloc(item->data.func->calls, callsCnt * sizeof(parser_func_call_t));
     if (item->data.func->calls == NULL) return OTHER_ERROR;
 
