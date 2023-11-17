@@ -32,7 +32,7 @@ extern int inIf;
 // Current token from scanner
 extern token_t token;
 extern bool seenReturn;
-extern int ret, code;
+extern int code;
 // Temp variable for current htable item
 extern ht_item_t *item;
 // Temp variable for token attr id

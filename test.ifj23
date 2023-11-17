@@ -1,7 +1,6 @@
-func f
-(
-) {
+if
+a {
+} else
+{
 
 }
-
-f(a)

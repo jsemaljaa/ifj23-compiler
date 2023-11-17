@@ -22,7 +22,7 @@ int inIf = 0;
 // Current token from scanner
 token_t token;
 bool seenReturn = false;
-int ret, code;
+int code;
 // Temp variable for current htable item
 ht_item_t *item;
 // Temp variable for token attr id

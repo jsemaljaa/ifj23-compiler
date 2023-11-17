@@ -35,7 +35,7 @@
 #define EXPECT(current, expected) \
     if(current != expected) { \
         error("Unexpected token %s", token_type_to_string(current)); \
-        exit(2); \
+        exit(SYNTAX_ERROR); \
     } \
 
 __attribute__((unused))
