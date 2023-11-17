@@ -42,5 +42,14 @@ extern string_t tmpTokenId;
 extern string_t *funcKeys;
 extern int keysCnt;
 
+int kw_to_type(keyword_t kw, datatype_t *datatype);
+bool is_token_const(token_type_t type);
+int init_func_keys();
+int append_func_keys(string_t key);
+void free_func_keys();
+int token_type_to_datatype(token_type_t type, datatype_t *datatype);
+bool compare_datatypes(datatype_t required, datatype_t passed);
+ht_item_t *find_var_in_symtables(string_t *key);
+
 
 #endif //COMPILER_PARSERHELPERS_H
