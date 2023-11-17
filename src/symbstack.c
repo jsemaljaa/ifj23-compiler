@@ -15,19 +15,19 @@ void symbstack_free(ht_stack_t *symbstack) {
 }
 
 int symbstack_push(ht_stack_t *symbstack) {
-
-    htable *tab = realloc(symbstack->head, (symbstack->size + 1) * sizeof(htable));
-
+    htable *tab = NULL;
+    tab = realloc(symbstack->head, (symbstack->size + 1) * sizeof(htable));
     if (tab == NULL) return OTHER_ERROR;
 
     symbstack->head = tab;
-    symt_init(symbstack->head);
+    symt_init(&symbstack->head[symbstack->size]);
     symbstack->size++;
 
     return NO_ERRORS;
 }
 
 void symbstack_pop(ht_stack_t *symbstack) {
+    debug("In symbstack pop: symbstack size %d", symbstack->size);
     symt_free(&symbstack->head[symbstack->size - 1]);
     symbstack->size--;
 }

@@ -55,8 +55,7 @@ int get_token(token_t *token){
                 if (c == EOL) {
                     token->type = TYPE_EOL;
                     return NO_ERRORS;
-                } else
-                    if (c == EOF) {
+                } else if (c == EOF) {
                     token->type = TYPE_EOF;
                     return NO_ERRORS;
                 } else if (c == ':') {
@@ -388,5 +387,6 @@ int get_token(token_t *token){
 
     }
 
-    return NO_ERRORS;
+
+    return code;
 }

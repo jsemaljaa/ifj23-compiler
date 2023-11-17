@@ -165,25 +165,34 @@ ht_item_t *symt_search(htable *table, string_t *key){
     return NULL;
 }
 
-void symt_free(htable *table){
-    if(table == NULL)
+void symt_free(htable *table) {
+    if (table == NULL)
         return;
 
     for (int i = 0; i < MAX_HT_SIZE; i++) {
         ht_item_t *item = (*table)[i];
         while (item != NULL) {
-            if (item->type == func) {
-                for (int i = 0; i < item->data.func->argc - 1; i++) {
-                    str_clear(&item->data.func->argv[i].callId);
-                    str_clear(&item->data.func->argv[i].id);
-                    free(&item->data.func->argv[i]);
-                }
-                free(item->data.func);
+            ht_item_t *next_item = (ht_item_t *) item->next;
 
+            if (item->type == func && item->data.func != NULL) {
+                if (item->data.func != NULL) {
+                    if (item->data.func->isDefined) {
+                        // Ensure valid argc before accessing argv
+                        if (item->data.func->argc > 0 && item->data.func->argv != NULL) {
+                            for (int j = 0; j < item->data.func->argc; j++) {
+                                str_clear(&item->data.func->argv[j].callId);
+                                str_clear(&item->data.func->argv[j].id);
+                            }
+                            free(item->data.func->argv);
+                        }
+                        free(item->data.func);
+                    }
+                }
             }
+
             str_clear(&item->key);
             free(item);
-            item = (ht_item_t *) item->next;
+            item = next_item;
         }
     }
 }

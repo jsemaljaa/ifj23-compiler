@@ -25,12 +25,6 @@ int from;
 
 datatype_t dt;
 
-#define GET_TOKEN_SKIP_EOL() \
-    do {                   \
-        GET_TOKEN();       \
-        while(token.type == TYPE_EOL) GET_TOKEN();       \
-    } while(0)             \
-
 #define FILL_NONE_DT() \
     do { \
         dt.type = NONE_DT; \

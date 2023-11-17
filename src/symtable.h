@@ -31,9 +31,13 @@ typedef struct datatype {
 
 typedef struct var_attr {
     datatype_t type;
-    // variable defined with keyword var => mutable = true
-    // variable defined with keyword let => mutable = false
+    // with keyword var => mutable = true
+    // with keyword let => mutable = false
     bool mutable;
+    // defined = false => not defined with any value
+    // defined = true => defined with type and value
+    // if the variable is present in symtable then it was at least declared
+    bool defined;
 } symt_var_t;
 
 typedef struct param {

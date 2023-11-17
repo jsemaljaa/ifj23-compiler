@@ -16,18 +16,12 @@
 #define EXPECT_ERROR(code) \
     if (code != NO_ERRORS) return code; \
 
+
 #define EXEC(func) \
     debug("Executing function %s", #func)\
     code = (func); \
     debug("Function %s received: %s", #func, get_text_code(code)); \
     EXPECT_ERROR(code); \
-
-
-#define RULE(func)                      \
-    debug("Applying rule %s", #func);   \
-    code = (func);                      \
-    debug("Rule <%s> returned %s", #func, get_text_code(code)); \
-    EXPECT_ERROR(code);                 \
 
 #define GET_TOKEN()             \
     code = get_token(&token);          \
