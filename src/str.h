@@ -100,4 +100,6 @@ void str_free(string_t *str);
  */
 // bool str_realloc(string_t *str, int len);
 
+int str_copy_word(const char *src, string_t *dst);
+
 #endif //COMPILER_STR_H

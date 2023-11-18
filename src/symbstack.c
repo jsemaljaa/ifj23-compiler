@@ -17,29 +17,35 @@ void symbstack_free(ht_stack_t *symbstack) {
     free(symbstack->head);
 }
 
-int symbstack_push(ht_stack_t *symbstack) {
-    htable *tab = NULL;
-    tab = realloc(symbstack->head, (symbstack->size + 1) * sizeof(htable));
-    if (tab == NULL) return OTHER_ERROR;
+int symbstack_push(ht_stack_t *symbstack, htable *table) {
+    symbstack->head = realloc(symbstack->head, (symbstack->size + 1) * sizeof(htable));
 
-    symbstack->head = tab;
-    symt_init(&symbstack->head[symbstack->size]);
+    if (symbstack->head == NULL) {
+        return OTHER_ERROR;
+    }
+
+    memcpy(&symbstack->head[symbstack->size], table, sizeof(htable));
+
     symbstack->size++;
 
     return NO_ERRORS;
 }
 
-void symbstack_pop(ht_stack_t *symbstack) {
+int symbstack_pop(ht_stack_t *symbstack) {
     debug("In symbstack pop: symbstack size %d", symbstack->size);
-    symt_free(&symbstack->head[symbstack->size - 1]);
-    symbstack->size--;
+
+    if (symbstack->size > 0) {
+        symbstack->size--;
+        symt_free(&symbstack->head[symbstack->size]);
+        return NO_ERRORS;
+    } else return OTHER_ERROR;
 }
 
 ht_item_t *symbstack_search(ht_stack_t *symbstack, string_t *key) {
-    ht_item_t *item = NULL;
     for (int i = symbstack->size - 1; i >= 0; i--) {
-        item = symt_search(&symbstack->head[i], key);
+        ht_item_t *item = symt_search(&symbstack->head[i], key);
+        if (item != NULL) return item;
     }
 
-    return item;
+    return NULL;
 }

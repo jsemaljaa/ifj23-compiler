@@ -98,6 +98,34 @@ int str_cmp_const(string_t *s1, const char *s2){
     return strcmp(s1->s, s2);
 }
 
+int str_copy_word(const char *src, string_t *dst) {
+    if (src == NULL || dst == NULL) {
+        return OTHER_ERROR;
+    }
+
+    str_clear(dst);
+
+    int len = strlen(src);
+
+    if (len >= dst->allocated) {
+        int size = len + 1;
+        char *new = realloc(dst->s, size);
+        if (new == NULL) {
+            return OTHER_ERROR;
+        }
+
+        dst->s = new;
+        dst->allocated = size;
+    }
+
+    strncpy(dst->s, src, len);
+
+    dst->s[len] = '\0';
+    dst->len = len;
+
+    return NO_ERRORS;
+}
+
 void str_free(string_t *str){
     if (str->s != NULL){
         free(str->s);

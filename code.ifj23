@@ -1,15 +1,36 @@
-func a(_ h: String, with f: Int) {}
+/*
+//func a(_ h: String, with f: Int) {}
 
-let q : String
-let b : Int
+// let q : String
+// let b : Int
 
-i(q, b)
+// i(q, b)
+
 
 func i() {
     let c : String
     let d : Int
     a(c, with: d)
 }
+*/
 
+// check if i call a function from a local scope and then pop this table as i leave it
+// therefore i lose the call
 
+// also add internal functions definitions
 
+length("5")
+
+substring(of: "str", startingAt: 1, endingBefore: 2)
+
+ord("A")
+
+chr(1)
+
+let b : Int
+
+Int2Double(b)
+
+let d : Double
+
+Double2Int(d)

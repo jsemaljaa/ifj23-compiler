@@ -153,7 +153,7 @@ int func_def() {
     NEXT_NON_EOL(token.type, TYPE_LPAR);
 
     scope++;
-    EXEC(symbstack_push(&localTables));
+    EXEC(create_local_table());
     item->scope = scope;
 
     RULE(parameters_list());
@@ -368,7 +368,8 @@ int save_func_call_more() {
 
         return NO_ERRORS;
     } else if (token.type == TYPE_RPAR) {
-        GET_TOKEN_SKIP_EOL();
+//        GET_TOKEN_SKIP_EOL();
+//        GET_TOKEN();
         return NO_ERRORS;
     } else return SYNTAX_ERROR;
 
@@ -434,8 +435,7 @@ int save_func_call_param() {
 }
 
 int save_func_call() {
-    // token right now is (
-    GET_TOKEN();
+    GET_TOKEN_SKIP_EOL();
     EXEC(symt_add_func_call(item));
 
     if (token.type == TYPE_RPAR) {
@@ -470,7 +470,6 @@ int expression(){
 
         if (item == NULL) { // no function id in symtable, save the call, if it won't be defined then semantic error
             EXEC(symt_add_func(&gTable, &tmpTokenId));
-
             item = symt_search(&gTable, &tmpTokenId);
             item->data.func->isDefined = false;
 
@@ -525,6 +524,7 @@ int call_parameters_list() {
 int call_parameter() {
     // token here is either TYPE_ID or const
     int currArg = item->data.func->argPos;
+
     if (currArg >= item->data.func->argc) return SEMANTIC_CALL_RET_ERROR;
 
     if (is_token_const(token.type)) {
@@ -532,7 +532,7 @@ int call_parameter() {
         datatype_t tmp;
         EXEC(token_type_to_datatype(token.type, &tmp));
 
-        if (!str_cmp_const(&item->data.func->argv[currArg].callId, "_")
+        if (str_cmp_const(&item->data.func->argv[currArg].callId, "_")
             || !compare_datatypes(item->data.func->argv[currArg].attr.type, tmp))
             return SEMANTIC_CALL_RET_ERROR;
 
@@ -589,6 +589,7 @@ int call_parameters_list_more() {
         RULE(call_parameter());
     } else if (token.type == TYPE_RPAR) {
         GET_TOKEN_SKIP_EOL();
+        item->data.func->argPos = 0;
     } else {
         return SYNTAX_ERROR;
     }
@@ -615,7 +616,7 @@ int if_statement() {
 
     inIf++;
     scope++;
-    EXEC(symbstack_push(&localTables));
+    EXEC(create_local_table());
 
     if (token.type == TYPE_KW) {
         if (token.attribute.keyword != K_LET) return SYNTAX_ERROR;
@@ -646,7 +647,7 @@ int expect_else() {
     inElse = true;
 
     scope++;
-    EXEC(symbstack_push(&localTables));
+    EXEC(create_local_table());
 
     GET_TOKEN_SKIP_EOL();
     RULE(statement_list());
@@ -658,6 +659,8 @@ int parse() {
     EXEC(str_create(&token.attribute.id, STR_SIZE));
     EXEC(str_create(&tmpTokenId, STR_SIZE));
 
+    EXEC(init_builtins());
+
     EXEC(init_func_keys());
     // Get first token
     GET_TOKEN_SKIP_EOL();
@@ -667,7 +670,7 @@ int parse() {
 
     // Memory cleaning
 
-    free_func_keys();
+//    free_func_keys();
     symt_free(&gTable);
     str_clear(&token.attribute.id);
     str_clear(&tmpTokenId);

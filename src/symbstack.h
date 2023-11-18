@@ -22,9 +22,9 @@ typedef struct tables_stack {
 
 void symbstack_free(ht_stack_t *symbstack);
 
-int symbstack_push(ht_stack_t *symbstack);
+int symbstack_push(ht_stack_t *symbstack, htable *table);
 
-void symbstack_pop(ht_stack_t *symbstack);
+int symbstack_pop(ht_stack_t *symbstack);
 
 ht_item_t *symbstack_search(ht_stack_t *symbstack, string_t *key);
 

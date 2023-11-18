@@ -67,6 +67,7 @@ int symt_add_func(htable *table, string_t *key) {
         if (item->data.func == NULL) return OTHER_ERROR;
 
         item->data.func->argc = 0;
+        item->data.func->argPos = 0;
 
         return NO_ERRORS;
     } else {
