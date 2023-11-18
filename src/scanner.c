@@ -14,6 +14,8 @@
 int hexCnt = 0;
 int commCnt = 0;
 
+bool metExcl;
+
 states_t state;
 
 keyword_t match_keyword(token_t *token) {
@@ -48,6 +50,8 @@ int get_token(token_t *token){
 
     state = STATE_START;
     char c;
+
+    metExcl = false;
 
     while (1) {
         c = getc(stdin);
@@ -91,7 +95,7 @@ int get_token(token_t *token){
                 } else if (c == '=') {
                     state = STATE_EQUALS;
                 } else if (c == '_') {
-                        EXEC_STR(str_append(&token->attribute.id, c));
+                    EXEC_STR(str_append(&token->attribute.id, c));
                     state = STATE_UNDERSCORE;
                 } else if (c == '-') {
                     state = STATE_MINUS;
@@ -106,7 +110,6 @@ int get_token(token_t *token){
                 } else if (c == '?') {
                     state = STATE_QUES;
                 } else if (isupper(c) || islower(c)) {
-                    // check for other error 99
                     EXEC_STR(str_append(&token->attribute.id, c));
                     state = STATE_ID_KW;
                 } else if (c == '"') {
@@ -114,10 +117,9 @@ int get_token(token_t *token){
                 } else if (isspace(c)){
                     state = STATE_START;
                 } else if (isdigit(c)) {
-                    // check for other error 99
                     EXEC_STR(str_append(&token->attribute.id, c));
                     state = STATE_NUMBER_INTEGER;
-                }
+                } else return LEXICAL_ERROR;
                 break;
 
             case STATE_EQUALS:
@@ -145,12 +147,11 @@ int get_token(token_t *token){
             case STATE_MINUS:
                 if (c == '>') {
                     token->type = TYPE_ARROW;
-                    return NO_ERRORS;
                 } else {
                     ungetc(c, stdin);
                     token->type = TYPE_MINUS;
-                    return NO_ERRORS;
                 }
+                return NO_ERRORS;
 
             case STATE_DIV:
                 if (c == '*') {
@@ -170,45 +171,49 @@ int get_token(token_t *token){
             case STATE_GREATER:
                 if (c == '=') {
                     token->type = TYPE_GE;
-                    return NO_ERRORS;
                 } else {
                     ungetc(c, stdin);
                     token->type = TYPE_GT;
-                    return NO_ERRORS;
                 }
+                return NO_ERRORS;
 
             case STATE_LESS:
                 if (c == '=') {
                     token->type = TYPE_LE;
-                    return NO_ERRORS;
                 } else {
                     ungetc(c, stdin);
                     token->type = TYPE_LT;
-                    return NO_ERRORS;
                 }
+                return NO_ERRORS;
 
             case STATE_EXCL:
                 if (c == '=') {
                     token->type = TYPE_NEQ;
-                    return NO_ERRORS;
                 } else {
                     ungetc(c, stdin);
                     token->type = TYPE_EXCL;
-                    return NO_ERRORS;
                 }
+                return NO_ERRORS;
 
             case STATE_QUES:
                 if (c == '?') {
                     token->type = TYPE_NILCOAL;
                     return NO_ERRORS;
                 } else {
-                    ungetc(c, stdin);
-                    token->type = TYPE_QUES;
-                    return NO_ERRORS;
+                    return LEXICAL_ERROR;
                 }
 
             case STATE_ID_KW:
+                if (metExcl) {
+                    // exclamation mark should be the end of keyword, can't be seen in an id
+                    debug("fml");
+                    keyword_t kw = match_keyword(token);
+                    ungetc(c, stdin);
+                    if (kw == K_NONE) return LEXICAL_ERROR;
+                }
+
                 if (c == '_' || isupper(c) || islower(c) || isdigit(c) || c == '?') {
+                    if (c == '?') metExcl = true;
                     EXEC_STR(str_append(&token->attribute.id, c));
                 } else {
                     keyword_t kw = match_keyword(token);
@@ -259,14 +264,14 @@ int get_token(token_t *token){
                 } else if (c == 'u') {
                     EXEC_STR(str_append(&token->attribute.string, c));
                     state = STATE_STRING_SEQ;
-                }
+                } else return LEXICAL_ERROR;
                 break;
 
             case STATE_STRING_SEQ:
                 if (c == '{') {
                     EXEC_STR(str_append(&token->attribute.string, c));
                     state = STATE_STRING_SEQ_HEX;
-                }
+                } else return LEXICAL_ERROR;
                 break;
 
             case STATE_STRING_SEQ_HEX:
@@ -289,8 +294,10 @@ int get_token(token_t *token){
 
             case STATE_NUMBER_INTEGER:
                 if (c == 'e' || c == 'E') {
+                    EXEC_STR(str_append(&token->attribute.string, c));
                     state = STATE_NUMBER_EXP_START;
                 } else if (c == '.') {
+                    EXEC_STR(str_append(&token->attribute.string, c));
                     state = STATE_NUMBER_DOUBLE_START;
                 } else if (!isdigit(c)) {
                     ungetc(c, stdin);
@@ -389,7 +396,5 @@ int get_token(token_t *token){
         }
 
     }
-
-
     return code;
 }
