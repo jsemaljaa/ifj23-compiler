@@ -1,24 +1,24 @@
-/*
-//func a(_ h: String, with f: Int) {}
 
-// let q : String
-// let b : Int
+func a(_ h: String, with f: Int) {}
 
-// i(q, b)
+let q : String
+let b : Int
 
+i(q, b)
 
-func i() {
+func i(_ f: String, _ l: Int) {
     let c : String
     let d : Int
-    a(c, with: d)
+    a(f, l)
 }
-*/
 
 // check if i call a function from a local scope and then pop this table as i leave it
 // therefore i lose the call
+// UPD: no i dont as i define all the functions with its calls directly in global table
+//      so i might await for it without losing any data for controls
 
-// also add internal functions definitions
 
+/*
 length("5")
 
 substring(of: "str", startingAt: 1, endingBefore: 2)
@@ -34,3 +34,4 @@ Int2Double(b)
 let d : Double
 
 Double2Int(d)
+*/

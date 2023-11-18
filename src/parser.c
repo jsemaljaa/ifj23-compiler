@@ -38,6 +38,32 @@ int while_statement() {
 }
 
 int execute_calls() {
+    // here item contains a call we have to execute and check call parameters
+    int callsCnt = item->data.func->callsCnt;
+
+    for (int i = 0; i < callsCnt; i++) {
+        int callArgc = item->data.func->calls[i].argc;
+        int funcArgc = item->data.func->argc;
+
+        if (callArgc == funcArgc) {
+            if (callArgc == 0) return NO_ERRORS;
+
+            for (int j = 0; j < callArgc; j++) {
+                if(str_cmp(&item->data.func->calls[i].params[j].callId, &item->data.func->argv[j].callId))
+                    return SEMANTIC_CALL_RET_ERROR;
+
+                datatype_t provided = item->data.func->calls[i].params[j].attr.type;
+                datatype_t required = item->data.func->argv[j].attr.type;
+
+                if(!compare_datatypes(required, provided))
+                    return SEMANTIC_CALL_RET_ERROR;
+            }
+
+        } else {
+            return SEMANTIC_CALL_RET_ERROR;
+        }
+    }
+
     return NO_ERRORS;
 }
 
@@ -53,10 +79,14 @@ int statement_list() {
 
         // here we also have to check if all the functions that were called were also defined
 
-        if (keysCnt != 0) {
+        if (keysCnt == 0) return NO_ERRORS;
+
+        for (int i = 0; i < keysCnt; i++) {
+            debug("funckeys str: %s", funcKeys[i].s);
+            item = symt_search(&gTable, &funcKeys[i]);
+            if (!item->data.func->isDefined) return SEMANTIC_DEF_ERROR;
             EXEC(execute_calls());
         }
-
         return NO_ERRORS;
     }
 
@@ -449,9 +479,9 @@ int save_func_call() {
         return SYNTAX_ERROR;
     }
 
-    keysCnt++;
 
     EXEC(append_func_keys(item->key));
+
     GET_TOKEN_SKIP_EOL();
     return NO_ERRORS;
 }

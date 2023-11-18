@@ -1,6 +1,5 @@
 // Program 2: Vypocet faktorialu (rekurzivne)
 // Hlavni telo programu
-write("Zadejte cislo pro vypocet faktorialu: ")
 let inp = readInt()
 // pomocna funkce pro dekrementaci celeho cisla o zadane cislo
 func decrement(of n: Int, by m: Int) -> Int {
@@ -21,11 +20,8 @@ return result!
 // pokracovani hlavniho tela programu
 if let inp {
 if (inp < 0) { // Pokracovani hlavniho tela programu
-write("Faktorial nelze spocitat!")
 } else {
 let vysl = factorial(inp)
-write("Vysledek je: ", vysl)
 }
 } else {
-write("Chyba pri nacitani celeho cisla!")
 }

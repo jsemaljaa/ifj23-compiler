@@ -44,9 +44,7 @@ int init_builtins() {
 
     for (int i = 0; i < BUILTINS_SIZE; i++) {
 
-        debug("current word: %s", builtins[i]);
         str_copy_word(builtins[i], &key);
-        debug("after copy: %s", key.s);
         EXEC(symt_add_func(&gTable, &key));
 
         ht_item_t *item = symt_search(&gTable, &key);
@@ -185,7 +183,7 @@ void free_func_keys() {
 }
 
 bool compare_datatypes(datatype_t required, datatype_t passed) {
-    return (required.type == passed.type);
+    return (required.type == passed.type) && (required.nullable == passed.nullable);
 }
 
 bool is_token_const(token_type_t type) {
