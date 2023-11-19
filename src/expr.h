@@ -15,30 +15,26 @@
 #include "symbstack.h"
 #include "parser.h"
 
+#define PUSH_STOP() \
+    do { \
+        EXEC(prec_stack_push(&stack, STOP, fill_none_datatype())); \
+    } while(0)
+
+
+#define PUSH_SYMBOL(s, d) \
+    EXEC(prec_stack_push(&stack, s, d));\
+
+#define POP_N(n)                        \
+    for (int i = 0; i < n; i++) {       \
+       prec_stack_pop(&stack);          \
+    }                                   \
+
 // Precedence table
 
 typedef enum prec_rules prec_rules_t;
 typedef enum prec_symbols prec_symbs_t;
 
-static const char prec_table[][16] = {
-        /*        id   (    )    +    *    -    /    ??   !    ==  !=    >   >=    <   <=    $    */
-        /* id */{'e', 'e', '>', '>', '>', '>', '>', '>', '>', '>', '>', '>', '>', '>', '>', '>'},
-        /* (  */{'<', '<', '=', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', 'e' },
-        /* )  */{'<', 'e', '>', '>', '>', '>', '>', '>', '>', '>', '>', '>', '>', '>', '>', '>'},
-        /* +  */{'<', '<', '>', '>', '<', '>', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>'},
-        /* *  */{'<', '<', '>', '>', '>', '<', '>', '>', '<', '>', '>', '>', '>', '>', '>', '>'},
-        /* -  */{'<', '<', '>', '>', '<', '>', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>'},
-        /* /  */{'<', '<', '>', '>', '>', '<', '>', '>', '<', '>', '>', '>', '>', '>', '>', '>'},
-        /* ?? */{'<', '<', '>', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '>'},
-        /* !  */{'<', '>', '>', '>', '>', '>', '>', '>', '>', '>', '>', '>', '>', '>', '>', '>'},
-        /* == */{'<', '<', '>', '<', '<', '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>'},
-        /* != */{'<', '<', '>', '<', '<', '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>'},
-        /* >  */{'<', '<', '>', '<', '<', '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>'},
-        /* >= */{'<', '<', '>', '<', '<', '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>'},
-        /* <  */{'<', '<', '>', '<', '<', '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>'},
-        /* <= */{'<', '<', '>', '<', '<', '<', '<', '>', '<', '>', '>', '>', '>', '>', '>', '>'},
-        /* $  */{'<', '<', 'e', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', '<', 'e'},
-};
+
 
 // a ?? b
 // if a is nil then b
@@ -70,5 +66,14 @@ int parse_expression(int origin);
 int analyze_symbol();
 
 int shift();
+
+bool end_of_expression();
+bool is_token_allowed();
+bool is_symbol_operator(prec_symbs_t symbol);
+int types_are_equal(datatype_t first, datatype_t second);
+int compatibility(prec_rules_t rule, prec_stack_item_t *first, prec_stack_item_t *second);
+datatype_t determine_result_type(prec_rules_t rule, prec_stack_item_t *first, prec_stack_item_t *second);
+datatype_t fill_none_datatype();
+
 
 #endif //COMPILER_EXPR_H

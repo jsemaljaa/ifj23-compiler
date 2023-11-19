@@ -15,16 +15,20 @@
 
 extern int code;
 
+typedef struct tables_stack_item {
+    struct tables_stack_item *next;
+    htable *table;
+} ht_stack_item_t;
+
 typedef struct tables_stack {
-    htable *head;
-    int size;
+    ht_stack_item_t *head;
 } ht_stack_t;
 
 void symbstack_free(ht_stack_t *symbstack);
 
-int symbstack_push(ht_stack_t *symbstack, htable *table);
+int symbstack_push(ht_stack_t *symbstack);
 
-int symbstack_pop(ht_stack_t *symbstack);
+bool symbstack_pop(ht_stack_t *symbstack);
 
 ht_item_t *symbstack_search(ht_stack_t *symbstack, string_t *key);
 

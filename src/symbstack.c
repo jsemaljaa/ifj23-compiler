@@ -10,42 +10,46 @@
 
 #include "symbstack.h"
 
-void symbstack_free(ht_stack_t *symbstack) {
-    for (int i = 0; i < symbstack->size; i++) {
-        symbstack_pop(symbstack);
-    }
-    free(symbstack->head);
+void symbstack_init(ht_stack_t *stack) {
+    stack->head = NULL;
 }
 
-int symbstack_push(ht_stack_t *symbstack, htable *table) {
-    symbstack->head = realloc(symbstack->head, (symbstack->size + 1) * sizeof(htable));
+void symbstack_free(ht_stack_t *symbstack) {
+    while(symbstack_pop(symbstack));
+}
 
-    if (symbstack->head == NULL) {
-        return OTHER_ERROR;
-    }
+int symbstack_push(ht_stack_t *symbstack) {
+    ht_stack_item_t *item = (ht_stack_item_t *)malloc(sizeof(ht_stack_item_t));
 
-    memcpy(&symbstack->head[symbstack->size], table, sizeof(htable));
+    if (item == NULL) return OTHER_ERROR;
 
-    symbstack->size++;
+    item->table = (htable *)malloc(sizeof(htable));
+    if (item->table == NULL) return OTHER_ERROR;
+
+    symt_init(item->table);
+
+    item->next = symbstack->head;
+    symbstack->head = item;
 
     return NO_ERRORS;
 }
 
-int symbstack_pop(ht_stack_t *symbstack) {
-    debug("In symbstack pop: symbstack size %d", symbstack->size);
-
-    if (symbstack->size > 0) {
-        symbstack->size--;
-        symt_free(&symbstack->head[symbstack->size]);
-        return NO_ERRORS;
-    } else return OTHER_ERROR;
+bool symbstack_pop(ht_stack_t *symbstack) {
+    if (symbstack->head != NULL) {
+        ht_stack_item_t *current = symbstack->head;
+        symbstack->head = current->next;
+        free(current);
+        return true;
+    }
+    return false;
 }
 
 ht_item_t *symbstack_search(ht_stack_t *symbstack, string_t *key) {
-    for (int i = symbstack->size - 1; i >= 0; i--) {
-        ht_item_t *item = symt_search(&symbstack->head[i], key);
+    ht_stack_item_t *head;
+    for (head = symbstack->head; head != NULL; head = head->next) {
+        debug("key is %s", key->s);
+        ht_item_t *item = symt_search(head->table, key);
         if (item != NULL) return item;
     }
-
     return NULL;
 }

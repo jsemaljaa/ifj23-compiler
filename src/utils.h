@@ -14,10 +14,10 @@
 
 
 #include "scanner.h"
+#include "precstack.h"
 
 #define EXPECT_ERROR(code) \
     if (code != NO_ERRORS) return code; \
-
 
 #define EXEC(func)                                  \
     debug("Executing function %s", #func);              \
@@ -36,7 +36,7 @@
     if(current != expected) { \
         error("Unexpected token %s", token_type_to_string(current)); \
         return SYNTAX_ERROR; \
-    } \
+    }                             \
 
 __attribute__((unused))
 static const char* token_type_to_string(token_type_t type) {
@@ -141,6 +141,51 @@ static const char* keyword_to_string(keyword_t keyword) {
             return "Double?";
         default:
             return "Unknown";
+    }
+}
+__attribute__((unused))
+static const char* symbol_to_text(prec_symbs_t symbol) {
+    switch (symbol) {
+        case ID:
+            return "ID";
+        case LPAR:
+            return "LPAR";
+        case RPAR:
+            return "RPAR";
+        case PLUS:
+            return "PLUS";
+        case MUL:
+            return "MUL";
+        case MINUS:
+            return "MINUS";
+        case DIV:
+            return "DIV";
+        case NILCOAL:
+            return "NILCOAL";
+        case EXCL:
+            return "EXCL";
+        case EQ:
+            return "EQ";
+        case NEQ:
+            return "NEQ";
+        case GT:
+            return "GT";
+        case GE:
+            return "GE";
+        case LT:
+            return "LT";
+        case LE:
+            return "LE";
+        case EMPTY:
+            return "EMPTY";
+        case NONTERM:
+            return "NONTERM";
+        case STOP:
+            return "STOP";
+        case ERR:
+            return "ERR";
+        default:
+            return "UNKNOWN";
     }
 }
 

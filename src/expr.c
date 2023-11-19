@@ -25,30 +25,18 @@ datatype_t symbDt;
 htable *workingTable;
 int from;
 
-datatype_t dt;
 
-#define FILL_NONE_DT() \
-    do { \
-        dt.type = NONE_DT; \
-        dt.nullable = false; \
-    } while(0)
+datatype_t fill_none_datatype() {
+    datatype_t dt;
 
-#define PUSH_STOP() \
-    do { \
-        FILL_NONE_DT(); \
-        EXEC(prec_stack_push(&stack, STOP, dt)); \
-    } while(0)
+    dt.type = NONE_DT;
+    dt.nullable = false;
 
-
-#define PUSH_SYMBOL(s, d) \
-    EXEC(prec_stack_push(&stack, s, d));\
-
-#define POP_N(n)                        \
-    for (int i = 0; i < n; i++) {       \
-       prec_stack_pop(&stack);          \
-    }                                   \
+    return dt;
+}
 
 int get_symbol(prec_symbs_t *symbol) {
+    if(!is_token_allowed()) return SYNTAX_ERROR;
     prec_symbs_t tmp;
     switch (token.type) {
         case TYPE_INT:
@@ -108,6 +96,7 @@ int get_symbol(prec_symbs_t *symbol) {
 }
 
 int get_data_type(datatype_t *datatype) {
+    if(!is_token_allowed()) return SYNTAX_ERROR;
     ht_item_t *symbol;
     datatype->nullable = false;
     switch (token.type) {
@@ -129,7 +118,8 @@ int get_data_type(datatype_t *datatype) {
             datatype->type = STRING_DT;
             break;
         default:
-            return SYNTAX_ERROR;
+            datatype->type = NONE_DT;
+            return NO_ERRORS;
     }
 
     return NO_ERRORS;
@@ -178,8 +168,7 @@ int shift() {
     if (head->symb == NONTERM) { // if head is nonterm, pop and push stop sign and then nonterm back
         POP_N(1);
         PUSH_STOP();
-        FILL_NONE_DT();
-        PUSH_SYMBOL(NONTERM, dt);
+        PUSH_SYMBOL(NONTERM, fill_none_datatype());
     } else if (head->symb == LPAR && is_symbol_operator(symb)) { // if top is ) and symb is operator
         return SYNTAX_ERROR;
     }
@@ -270,13 +259,8 @@ int compatibility(prec_rules_t rule, prec_stack_item_t *first, prec_stack_item_t
             }
             if (first->type.type == STRING_DT || second->type.type == STRING_DT) {
                 return SEMANTIC_TYPE_COMP_ERROR;
-            } else {
-                return NO_ERRORS;
             }
         }
-
-
-        return NO_ERRORS;
     }
     return NO_ERRORS;
 }
@@ -286,25 +270,26 @@ datatype_t determine_result_type(prec_rules_t rule, prec_stack_item_t *first, pr
 
     if (rule == PLUS_R || rule == MUL_R || rule == MINUS_R || rule == DIV_R) {
         // single type for whole expression
+        // we're here only in case if one or both operands are either Int or Double type
         if (types_are_equal(first->type, second->type)) final = first->type;
         else {
             if (first->type.type == DOUBLE_DT) final = first->type;
             else if (second->type.type == DOUBLE_DT) final = second->type;
         }
-
     }
 
     return final;
 }
 
 int reduce() {
-    head = prec_stack_head(&stack);
     int cnt = 0;
+    head = prec_stack_head(&stack);
     prec_stack_item_t *tmp = head;
-    while (tmp->symb != STOP) {
+    while (head->symb != STOP) {
         cnt++;
-        tmp = tmp->next;
+        head = head->next;
     }
+    head = prec_stack_head(&stack);
     debug("yo");
 
     prec_rules_t rule;
@@ -345,6 +330,15 @@ int reduce() {
     return NO_ERRORS;
 }
 
+int equal() {
+    if (symb == ID) return SEMANTIC_EXPR_ERROR;
+    POP_N(2);
+    PUSH_SYMBOL(NONTERM, fill_none_datatype());
+    head = prec_stack_head(&stack);
+
+    return NO_ERRORS;
+}
+
 int analyze_symbol() {
     char precedence = prec_table[head->symb][symb];
 
@@ -355,8 +349,13 @@ int analyze_symbol() {
         case '>': // reduce
             EXEC(reduce());
             break;
+        case '=':
+            EXEC(equal());
+            break;
+        case 'e':
+        default:
+            return SYNTAX_ERROR;
     }
-
     return NO_ERRORS;
 }
 
@@ -375,14 +374,13 @@ int parse_expression(int origin) {
     // logic: end of every expression is the start of next one (or EOF)
 
     // find working table
-    workingTable = scope == 0 ? &gTable : &localTables.head[scope - 1];
+    workingTable = scope == 0 ? &gTable : localTables.head->table;
 
     prec_stack_init(&stack);
-    FILL_NONE_DT();
-    prec_stack_push(&stack, EMPTY, dt);
+    PUSH_SYMBOL(EMPTY, fill_none_datatype());
 
     GET_TOKEN_SKIP_EOL(); // get first token
-    if (!is_token_allowed() || end_of_expression()) return SYNTAX_ERROR;
+    if (end_of_expression()) return SYNTAX_ERROR;
     EXEC(get_symbol(&symb));
     EXEC(get_data_type(&symbDt));
 
@@ -394,12 +392,11 @@ int parse_expression(int origin) {
 
     while (!prec_stack_is_empty(&stack)) {
         GET_TOKEN_SKIP_EOL();
-        if (!is_token_allowed()) return SYNTAX_ERROR;
 
         if (end_of_expression()) {
             while (!prec_stack_is_empty(&stack)) {
                 head = prec_stack_head(&stack);
-                EXEC(reduce(head));
+                EXEC(reduce());
             }
             return NO_ERRORS;
         } else {

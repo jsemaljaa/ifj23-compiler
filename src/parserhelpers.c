@@ -120,11 +120,7 @@ symt_var_t construct_builtin_par(types_t type) {
 }
 
 int create_local_table() {
-    htable table;
-    symt_init(&table);
-
-    EXEC(symbstack_push(&localTables, &table));
-
+    EXEC(symbstack_push(&localTables));
     return NO_ERRORS;
 }
 

@@ -9,7 +9,7 @@ i(q, 6)
 func i(_ f: String, _ l: Int) {
     let c : String
     let d : Int
-    a(c, with: d)
+    a(q, with: b)
 }
 
 

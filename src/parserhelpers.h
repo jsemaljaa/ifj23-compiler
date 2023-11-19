@@ -28,10 +28,11 @@
         while (token.type == TYPE_EOL) GET_TOKEN(); \
     } while(0); \
 
-#define GET_TOKEN_SKIP_EOL()  \
-    GET_TOKEN();             \
-    if (token.type == TYPE_EOL) SKIP_EOL();\
-
+#define GET_TOKEN_SKIP_EOL()                        \
+    do {                                            \
+        GET_TOKEN();                                \
+        if (token.type == TYPE_EOL) SKIP_EOL();     \
+    } while(0);                                     \
 
 #define NEXT_NON_EOL(current, expected) \
     do {                                \

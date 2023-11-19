@@ -82,13 +82,17 @@ int statement_list() {
 
         if (keysCnt == 0) return NO_ERRORS;
 
+
         for (int i = 0; i < keysCnt; i++) {
             item = symt_search(&gTable, &funcKeys[i]);
             if (!item->data.func->isDefined) return SEMANTIC_DEF_ERROR;
             EXEC(execute_calls());
         }
+        keysCnt = 0;
+        debug("keyscnt: %d", keysCnt);
         return NO_ERRORS;
     }
+    debug("LEAVE!");
 
     if (token.type == TYPE_RBRACKET) {
         if (scope != 0) {
@@ -158,7 +162,7 @@ int statement_list() {
         }
     }
 
-    return statement_list();
+    return NO_ERRORS;
 }
 int func_def() {
     // check <func_header> first
@@ -263,7 +267,7 @@ int parameter() {
 
     debug("tmptokenid: %s", tmpTokenId.s);
 
-    htable *workingTable = &localTables.head[scope - 1];
+    htable *workingTable = localTables.head->table;
 
     // Add a variable to local function symtable
     ht_item_t *sVar = symt_search(workingTable, &tmpTokenId);
@@ -346,7 +350,7 @@ int var_def() {
 
     if (scope != 0) {
         varItem = symbstack_search(&localTables, &token.attribute.id);
-        workingTable = &localTables.head[scope - 1];
+        workingTable = localTables.head->table;
     } else {
         varItem = symt_search(&gTable, &token.attribute.id);
         workingTable = &gTable;
@@ -527,9 +531,15 @@ int expression(){
                 item->data.func->argPos = 0;
             }
         }
-    } else {
+    } else if (token.type == TYPE_ASSIGN) {
+        // first check if we're not trying to access an undefined variable
+        ht_item_t *var = find_var_in_symtables(&tmpTokenId);
+        if (var == NULL) return SEMANTIC_UNDEF_VAR_ERROR;
+
+        // we have tmp variable var here where we will save a result type of expression
+
         // TODO: in parse expression work with EOL skips
-        // EXEC(parse_expression(0));
+        EXEC(parse_expression(0));
 
         // TODO: check if we can use statement 5 + 5 as expression
 
@@ -546,10 +556,8 @@ int call_parameters_list() {
     if (token.type == TYPE_RPAR) {
         // TODO: EXPAND FUNC CALL ! ! !
         if (item->data.func->argc == 0) {
-
             GET_TOKEN_SKIP_EOL();
             return NO_ERRORS;
-
         } else {
             return SEMANTIC_CALL_RET_ERROR;
         }
@@ -568,11 +576,9 @@ int call_parameter() {
 
     if (currArg >= item->data.func->argc) {
         if (!str_cmp_const(&item->key, "write")) {
-            GET_TOKEN_SKIP_EOL();
             RULE(call_parameters_list_more());
             return NO_ERRORS;
         }
-
         return SEMANTIC_CALL_RET_ERROR;
     }
 
@@ -585,7 +591,6 @@ int call_parameter() {
             || !compare_datatypes(item->data.func->argv[currArg].attr.type, tmp)) {
 
             if (!str_cmp_const(&item->key, "write")) {
-                GET_TOKEN_SKIP_EOL();
                 RULE(call_parameters_list_more());
                 return NO_ERRORS;
             }
@@ -621,7 +626,6 @@ int call_parameter() {
                 EXEC(token_type_to_datatype(token.type, &tmp));
                 if (!compare_datatypes(item->data.func->argv[currArg].attr.type, tmp)){
                     if (!str_cmp_const(&item->key, "write")) {
-                        GET_TOKEN_SKIP_EOL();
                         RULE(call_parameters_list_more());
                         return NO_ERRORS;
                     }
@@ -639,13 +643,14 @@ int call_parameter() {
     item->data.func->argPos++;
 
     // get next token (if no syntax error it should be , or ) token)
-    GET_TOKEN_SKIP_EOL();
+//    GET_TOKEN_SKIP_EOL();
     RULE(call_parameters_list_more());
     return NO_ERRORS;
 }
 
 int call_parameters_list_more() {
 
+    GET_TOKEN_SKIP_EOL();
     if (token.type == TYPE_COMMA) {
         GET_TOKEN_SKIP_EOL();
         RULE(call_parameter());
