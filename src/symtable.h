@@ -23,6 +23,7 @@ typedef enum types {
     DOUBLE_DT,          // Double
     STRING_DT,          // String
     NIL_DT,             // nil
+    ANY_DT,             // datatype representing term for builtin functions
     NONE_DT             // For functions with no return datatype
 } types_t;
 

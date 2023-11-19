@@ -49,16 +49,17 @@ int execute_calls() {
             if (callArgc == 0) return NO_ERRORS;
 
             for (int j = 0; j < callArgc; j++) {
-                if(str_cmp(&item->data.func->calls[i].params[j].callId, &item->data.func->argv[j].callId))
+                if(str_cmp(&item->data.func->calls[i].params[j].callId, &item->data.func->argv[j].callId)) {
                     return SEMANTIC_CALL_RET_ERROR;
+                }
 
                 datatype_t provided = item->data.func->calls[i].params[j].attr.type;
                 datatype_t required = item->data.func->argv[j].attr.type;
 
-                if(!compare_datatypes(required, provided))
+                if(!compare_datatypes(required, provided)) {
                     return SEMANTIC_CALL_RET_ERROR;
+                }
             }
-
         } else {
             return SEMANTIC_CALL_RET_ERROR;
         }
@@ -82,7 +83,6 @@ int statement_list() {
         if (keysCnt == 0) return NO_ERRORS;
 
         for (int i = 0; i < keysCnt; i++) {
-            debug("funckeys str: %s", funcKeys[i].s);
             item = symt_search(&gTable, &funcKeys[i]);
             if (!item->data.func->isDefined) return SEMANTIC_DEF_ERROR;
             EXEC(execute_calls());
@@ -421,7 +421,7 @@ int save_func_call_param() {
         tmp.type = dt;
 
         // if callId == NULL && id == NULL we're passing const ! ! !
-        EXEC(symt_add_func_call_param(item, &undersc, &undersc, tmp));
+        EXEC(symt_add_func_call_param(item, NULL, &undersc, tmp));
 
         GET_TOKEN_SKIP_EOL();
 
@@ -435,17 +435,30 @@ int save_func_call_param() {
 
         if (token.type == TYPE_COLON) {
             // if we found colon then next token is param and tmpTokenId is callId
-            NEXT_NON_EOL(token.type, TYPE_ID);
+//            NEXT_NON_EOL(token.type, TYPE_ID);
 
-            ht_item_t *var = find_var_in_symtables(&token.attribute.id);
-            if (var == NULL) return SEMANTIC_UNDEF_VAR_ERROR;
+            // next token after colon is either ID or const which we are passing in function call
+            GET_TOKEN_SKIP_EOL();
 
-            tmp.type = var->data.var->type;
-            tmp.mutable = var->data.var->mutable;
+            if (token.type == TYPE_ID) {
+                ht_item_t *var = find_var_in_symtables(&token.attribute.id);
+                if (var == NULL) return SEMANTIC_UNDEF_VAR_ERROR;
 
-            EXEC(symt_add_func_call_param(item, &tmpTokenId, &token.attribute.id, tmp));
+                tmp.type = var->data.var->type;
+                tmp.mutable = var->data.var->mutable;
+
+                EXEC(symt_add_func_call_param(item, &tmpTokenId, &token.attribute.id, tmp));
+
+            } else if (is_token_const(token.type)) {
+                // token const here
+                EXEC(token_type_to_datatype(token.type, &tmp.type));
+                EXEC(symt_add_func_call_param(item, &tmpTokenId, NULL, tmp));
+
+            } else return SYNTAX_ERROR;
+
             GET_TOKEN_SKIP_EOL();
             EXEC(save_func_call_more());
+
         } else if (token.type == TYPE_COMMA || token.type == TYPE_RPAR) {
             // tmpTokenId has parameter name
             ht_item_t *var = find_var_in_symtables(&tmpTokenId);
@@ -454,12 +467,12 @@ int save_func_call_param() {
             tmp.type = var->data.var->type;
             tmp.mutable = var->data.var->mutable;
 
-            EXEC(symt_add_func_call_param(item, &undersc, &tmpTokenId, tmp));
+            EXEC(symt_add_func_call_param(item, NULL, &tmpTokenId, tmp));
             EXEC(save_func_call_more());
         } else return SYNTAX_ERROR;
     } else return SYNTAX_ERROR;
 
-    str_free(&undersc);
+//    str_free(&undersc);
 
     return NO_ERRORS;
 }
@@ -472,8 +485,6 @@ int save_func_call() {
         EXEC(symt_zero_parameters_call(item));
     } else if (token.type == TYPE_ID || is_token_const(token.type)) {
         EXEC(save_func_call_param());
-        // ht_item_t *item, string_t *callId, symt_var_t var
-        // symt_add_func_call_param
     } else {
         symt_remove_func_call(item);
         return SYNTAX_ERROR;
@@ -555,7 +566,15 @@ int call_parameter() {
     // token here is either TYPE_ID or const
     int currArg = item->data.func->argPos;
 
-    if (currArg >= item->data.func->argc) return SEMANTIC_CALL_RET_ERROR;
+    if (currArg >= item->data.func->argc) {
+        if (!str_cmp_const(&item->key, "write")) {
+            GET_TOKEN_SKIP_EOL();
+            RULE(call_parameters_list_more());
+            return NO_ERRORS;
+        }
+
+        return SEMANTIC_CALL_RET_ERROR;
+    }
 
     if (is_token_const(token.type)) {
         // example: write("hello")
@@ -563,8 +582,16 @@ int call_parameter() {
         EXEC(token_type_to_datatype(token.type, &tmp));
 
         if (str_cmp_const(&item->data.func->argv[currArg].callId, "_")
-            || !compare_datatypes(item->data.func->argv[currArg].attr.type, tmp))
+            || !compare_datatypes(item->data.func->argv[currArg].attr.type, tmp)) {
+
+            if (!str_cmp_const(&item->key, "write")) {
+                GET_TOKEN_SKIP_EOL();
+                RULE(call_parameters_list_more());
+                return NO_ERRORS;
+            }
+
             return SEMANTIC_CALL_RET_ERROR;
+        }
 
     } else if (token.type == TYPE_ID) {
 
@@ -593,6 +620,11 @@ int call_parameter() {
                 datatype_t tmp;
                 EXEC(token_type_to_datatype(token.type, &tmp));
                 if (!compare_datatypes(item->data.func->argv[currArg].attr.type, tmp)){
+                    if (!str_cmp_const(&item->key, "write")) {
+                        GET_TOKEN_SKIP_EOL();
+                        RULE(call_parameters_list_more());
+                        return NO_ERRORS;
+                    }
                     return SEMANTIC_CALL_RET_ERROR;
                 }
 
@@ -632,6 +664,9 @@ int check_call_param() {
 
     // now we should check datatype of a variable we're passing into function
     if (!compare_datatypes(item->data.func->argv[item->data.func->argPos].attr.type, param->data.var->type)) {
+        if (!str_cmp_const(&item->key, "write")) {
+            return NO_ERRORS;
+        }
         return SEMANTIC_CALL_RET_ERROR;
     }
 

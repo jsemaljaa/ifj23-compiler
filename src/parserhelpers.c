@@ -52,6 +52,7 @@ int init_builtins() {
 
         item->type = func;
         item->data.func->isDefined = true;
+        item->data.func->argPos = 0;
 
         if (!strcmp(builtins[i], "write")) {
             dt.type = NONE_DT;

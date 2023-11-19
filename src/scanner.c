@@ -18,6 +18,18 @@ bool metExcl;
 
 states_t state;
 
+bool peek_next_two() {
+    int c = getc(stdin);
+    int cc = getc(stdin);
+
+    if (c == '"' && cc == '"') {
+        ungetc(cc, stdin);
+        ungetc(c, stdin);
+        return true;
+    }
+    return false;
+}
+
 keyword_t match_keyword(token_t *token) {
     static const char *keywords[] = {
             "Int",
@@ -206,7 +218,6 @@ int get_token(token_t *token){
             case STATE_ID_KW:
                 if (metExcl) {
                     // exclamation mark should be the end of keyword, can't be seen in an id
-                    debug("fml");
                     keyword_t kw = match_keyword(token);
                     ungetc(c, stdin);
                     if (kw == K_NONE) return LEXICAL_ERROR;
@@ -246,7 +257,7 @@ int get_token(token_t *token){
 
             case STATE_STRING_END:
                 if (c == '"') {
-                    state = STATE_STRING_MULTILINE;
+                    state = STATE_STRING_MULTILINE_START;
                     break;
                 } else {
                     ungetc(c, stdin);
@@ -254,7 +265,17 @@ int get_token(token_t *token){
                     return NO_ERRORS;
                 }
 
-            case STATE_STRING_MULTILINE:
+            case STATE_STRING_MULTILINE_START:
+                // here we got first symbol of multiline string from input, then we can start reading string
+                if (c != EOL) return LEXICAL_ERROR;
+                state = STATE_STRING_MULTILINE_READ;
+                break;
+
+            case STATE_STRING_MULTILINE_READ:
+
+                break;
+
+            case STATE_STRING_MULTILINE_END:
                 break;
 
             case STATE_STRING_ESCAPE:

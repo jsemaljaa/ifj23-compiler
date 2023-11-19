@@ -105,20 +105,29 @@ int symt_add_func_call_param(ht_item_t *item, string_t *callId, string_t *id, sy
         item->data.func->calls[currCall].params = malloc(sizeof(param_t));
     }
 
-    item->data.func->calls[currCall].argc++;
 
-    int currParam = item->data.func->calls[currCall].argc - 1;
+    int currParam = item->data.func->calls[currCall].argc;
 
     item->data.func->calls[currCall].params = realloc(item->data.func->calls[currCall].params, currParam + 1 * sizeof(param_t));
     if (item->data.func->calls[currCall].params == NULL) return OTHER_ERROR;
 
-    EXEC_STR(str_create(&item->data.func->calls[currCall].params[currParam].callId, STR_SIZE));
     EXEC_STR(str_create(&item->data.func->calls[currCall].params[currParam].id, STR_SIZE));
+    EXEC_STR(str_create(&item->data.func->calls[currCall].params[currParam].callId, STR_SIZE));
 
-    EXEC_STR(str_copy(callId, &item->data.func->calls[currCall].params[currParam].callId));
-    EXEC_STR(str_copy(id, &item->data.func->calls[currCall].params[currParam].id));
+    if (id == NULL) {
+        EXEC_STR(str_append(&item->data.func->calls[currCall].params[currParam].id, '_'));
+    } else {
+        EXEC_STR(str_copy(id, &item->data.func->calls[currCall].params[currParam].id));
+    }
+
+    if (callId == NULL) {
+        EXEC_STR(str_append(&item->data.func->calls[currCall].params[currParam].callId, '_'));
+    } else {
+        EXEC_STR(str_copy(callId, &item->data.func->calls[currCall].params[currParam].callId));
+    }
 
     item->data.func->calls[currCall].params[currParam].attr = attr;
+    item->data.func->calls[currCall].argc++;
 
     return NO_ERRORS;
 }

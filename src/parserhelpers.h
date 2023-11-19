@@ -42,7 +42,7 @@
 #define RULE(func)                      \
     debug("Applying rule %s", #func);   \
     code = (func);                      \
-    debug("Rule <%s> returned %s", #func, get_text_code(code)); \
+    debug("Rule <%s> returned %s on token %s", #func, get_text_code(code), token_type_to_string(token.type)); \
     EXPECT_ERROR(code);                 \
 
 

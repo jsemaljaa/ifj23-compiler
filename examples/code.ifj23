@@ -1,25 +1,17 @@
-/*
+
 func a(_ h: String, with f: Int) {}
 
 let q : String
 let b : Int
 
-i(q, b)
+i(q, 6)
 
 func i(_ f: String, _ l: Int) {
     let c : String
     let d : Int
-    a(f, l)
+    a(c, with: d)
 }
-*/
 
-
-// check if i call a function from a local scope and then pop this table as i leave it
-// therefore i lose the call
-// UPD: no i dont as i define all the functions with its calls directly in global table
-//      so i might await for it without losing any data for controls
-
-let a : i?nt
 
 /*
 length("5")
