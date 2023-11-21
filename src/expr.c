@@ -111,7 +111,7 @@ int get_data_type(datatype_t *datatype) {
             datatype->type = NONE_DT;
             return NO_ERRORS;
     }
-
+    
     return NO_ERRORS;
 }
 
@@ -230,6 +230,7 @@ int get_rule(prec_rules_t *rule, int symbsCnt) {
         return SYNTAX_ERROR;
     }
     *rule = tmpRule;
+    genStackPush(tmpRule);      ////////////////
     return NO_ERRORS;
 }
 
