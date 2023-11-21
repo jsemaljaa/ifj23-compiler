@@ -676,6 +676,7 @@ int if_statement() {
 
     inIf++;
     scope++;
+    ifNumber = inIf;
     EXEC(create_local_table());
     
     geneneratorIfElse1(ifNumber);  ////////////////////
@@ -692,7 +693,6 @@ int if_statement() {
         if (token.type == TYPE_LBRACKET) return SYNTAX_ERROR;
         while (token.type != TYPE_LBRACKET) GET_TOKEN();
 
-        // pokud mame EXEC(parse_expression(1)); tak predtim  geneneratorExpressionBegin(); a potom  geneneratorExpressionEnd(); //////////////////
         // EXEC(parse_expression(1));
         // prec analysis should stop when there's token { found
     }
