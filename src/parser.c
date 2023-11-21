@@ -671,13 +671,15 @@ int check_call_param() {
 int if_statement() {
     // kw if here
     GET_TOKEN_SKIP_EOL();
-
+    
     // push new local symbtable to stack before we proceed with prec analysis
 
     inIf++;
     scope++;
     EXEC(create_local_table());
-
+    
+    geneneratorIfElse1(ifNumber);  ////////////////////
+    
     if (token.type == TYPE_KW) {
         if (token.attribute.keyword != K_LET) return SYNTAX_ERROR;
         else {
@@ -690,12 +692,19 @@ int if_statement() {
         if (token.type == TYPE_LBRACKET) return SYNTAX_ERROR;
         while (token.type != TYPE_LBRACKET) GET_TOKEN();
 
+        // pokud mame EXEC(parse_expression(1)); tak predtim  geneneratorExpressionBegin(); a potom  geneneratorExpressionEnd(); //////////////////
         // EXEC(parse_expression(1));
         // prec analysis should stop when there's token { found
     }
 
     GET_TOKEN_SKIP_EOL();
+
+    geneneratorIfElse2(ifNumber);  ///////////////
+    
     RULE(statement_list());
+
+    geneneratorIfElse3(ifNumber); //////////////////
+    
     return NO_ERRORS;
 }
 
