@@ -304,6 +304,7 @@ int return_statement() {
 
     if (token.type == TYPE_RBRACKET) {
         if (item->data.func->ret.type == NONE_DT) {
+            generatorReturn(item->key.s, false);
             return NO_ERRORS;
         }
     } else {
@@ -313,7 +314,7 @@ int return_statement() {
         // GET_TOKEN();
         while (token.type != TYPE_RBRACKET) GET_TOKEN();
     }
-
+    generatorReturn(item->key.s, true);
     return NO_ERRORS;
 }
 
