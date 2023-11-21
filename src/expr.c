@@ -377,7 +377,10 @@ int parse_expression(int origin) {
 
     if (is_symbol_operator(symb)) return SEMANTIC_OTHER_ERROR;
 
-    if(symb == ID) PUSH_SYMBOL(symb, symbDt);
+    if(symb == ID){
+        PUSH_SYMBOL(symb, symbDt);
+        geneneratorExpressionBegin();//////////////////
+    }
 
     head = prec_stack_head(&stack);
 
@@ -389,6 +392,7 @@ int parse_expression(int origin) {
                 head = prec_stack_head(&stack);
                 EXEC(reduce());
             }
+            geneneratorExpressionEnd(); ///////////////
             return NO_ERRORS;
         } else {
             EXEC(get_symbol(&symb));
