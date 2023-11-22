@@ -50,6 +50,7 @@ int execute_calls() {
                     return SEMANTIC_CALL_RET_ERROR;
                 }
             }
+        generatorFuncCall(item->data.func->calls[i].callId.s, item->data.func->calls[i].argc, &item->data.func->argv[i].attr.type); ///////////
         } else {
             return SEMANTIC_CALL_RET_ERROR;
         }
@@ -194,7 +195,7 @@ int func_def() {
 
     inFunc = true;
     RULE(func_body());
-
+    generatorFuncDef1(item->key.s, item->data.func->argc, item->data.func->calls);
     return NO_ERRORS;
 }
 
@@ -294,6 +295,7 @@ int parameters_list_more() {
 int func_body() {
     GET_TOKEN_SKIP_EOL();
     RULE(statement_list());
+    generatorFuncDef2(item->key.s);
     return NO_ERRORS;
 }
 
@@ -443,11 +445,14 @@ int save_func_call_param() {
                 tmp.mutable = var->data.var->mutable;
 
                 EXEC(symt_add_func_call_param(item, &tmpTokenId, &token.attribute.id, tmp));
-
+                generatorFuncCall(tmpTokenId.s, item->data.func->argc, &item->data.func->argv[item->data.func->argPos].attr.type); ////////////////
+                
             } else if (is_token_const(token.type)) {
                 // token const here
                 EXEC(token_type_to_datatype(token.type, &tmp.type));
                 EXEC(symt_add_func_call_param(item, &tmpTokenId, NULL, tmp));
+                generatorFuncCall(tmpTokenId.s, item->data.func->argc, &item->data.func->argv[item->data.func->argPos].attr.type); /////////////////////
+
 
             } else return SYNTAX_ERROR;
 
@@ -463,6 +468,7 @@ int save_func_call_param() {
             tmp.mutable = var->data.var->mutable;
 
             EXEC(symt_add_func_call_param(item, NULL, &tmpTokenId, tmp));
+            generatorFuncCall(tmpTokenId.s, item->data.func->argc, &item->data.func->argv[item->data.func->argPos].attr.type);   ////////////////
             EXEC(save_func_call_more());
         } else return SYNTAX_ERROR;
     } else return SYNTAX_ERROR;
@@ -580,7 +586,7 @@ int call_parameter() {
 
         if (str_cmp_const(&item->data.func->argv[currArg].callId, "_")
             || !compare_datatypes(item->data.func->argv[currArg].attr.type, tmp)) {
-
+            generatorFuncCall(tmpTokenId.s, item->data.func->argc, &item->data.func->argv[item->data.func->argPos].attr.type);
             if (!str_cmp_const(&item->key, "write")) {
                 RULE(call_parameters_list_more());
                 return NO_ERRORS;
