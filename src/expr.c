@@ -25,6 +25,14 @@ datatype_t symbDt;
 htable *workingTable;
 int from;
 
+void debug_print_stack() {
+    debug("stack");
+    prec_stack_item_t *it = prec_stack_head(&stack);
+    while (it != NULL) {
+        debug("%s", symbol_to_text(it->symb));
+        it = it->next;
+    }
+}
 
 datatype_t fill_none_datatype() {
     datatype_t dt;
@@ -37,61 +45,59 @@ datatype_t fill_none_datatype() {
 
 int get_symbol(prec_symbs_t *symbol) {
     if(!is_token_allowed()) return SYNTAX_ERROR;
-    prec_symbs_t tmp;
     switch (token.type) {
         case TYPE_INT:
         case TYPE_DOUBLE:
         case TYPE_STRING:
         case TYPE_ID:
-            tmp = ID;
+            *symbol = ID;
             break;
         case TYPE_LPAR:
-            tmp = LPAR;
+            *symbol = LPAR;
             break;
         case TYPE_RPAR:
-            tmp = RPAR;
+            *symbol = RPAR;
             break;
         case TYPE_PLUS:
-            tmp = PLUS;
+            *symbol = PLUS;
             break;
         case TYPE_MUL:
-            tmp = MUL;
+            *symbol = MUL;
             break;
         case TYPE_MINUS:
-            tmp = MINUS;
+            *symbol = MINUS;
             break;
         case TYPE_DIV:
-            tmp = DIV;
+            *symbol = DIV;
             break;
         case TYPE_NILCOAL:
-            tmp = NILCOAL;
+            *symbol = NILCOAL;
             break;
         case TYPE_EXCL:
-            tmp = EXCL;
+            *symbol = EXCL;
             break;
         case TYPE_EQ:
-            tmp = EQ;
+            *symbol = EQ;
             break;
         case TYPE_NEQ:
-            tmp = NEQ;
+            *symbol = NEQ;
             break;
         case TYPE_GT:
-            tmp = GT;
+            *symbol = GT;
             break;
         case TYPE_GE:
-            tmp = GE;
+            *symbol = GE;
             break;
         case TYPE_LT:
-            tmp = LT;
+            *symbol = LT;
             break;
         case TYPE_LE:
-            tmp = LE;
+            *symbol = LE;
             break;
         default:
             return SYNTAX_ERROR;
     }
 
-    *symbol = tmp;
     return NO_ERRORS;
 }
 
@@ -183,54 +189,53 @@ int get_rule(prec_rules_t *rule, int symbsCnt) {
     // head - first, head->next - second, head->next->next - third
     prec_stack_item_t *first = head;
     prec_stack_item_t *second = head->next;
-    prec_rules_t tmpRule;
-    
+
     if (symbsCnt == 1) {
         if (first->symb == ID || first->type.type == INTEGER_DT || first->type.type == DOUBLE_DT || first->type.type == STRING_DT) {
-            tmpRule = ID_R;
-            rule = &tmpRule;
-            return NO_ERRORS;
-        } else return SYNTAX_ERROR;
+            *rule = ID_R;
+        } else {
+            return SYNTAX_ERROR;
+        }
     } else if (symbsCnt == 2) {
         if (first->symb == NONTERM && second->symb == EXCL) {
-            tmpRule = EXCL_R;
+            *rule = EXCL_R;
         }
     } else if (symbsCnt == 3) {
         prec_stack_item_t *third = head->next->next;
         if ((third->symb == NONTERM || first->symb == NONTERM) && is_symbol_operator(second->symb)) {
             switch (second->symb) {
                 case PLUS: 			    // E -> E + E
-                    tmpRule = PLUS_R;
+                    *rule = PLUS_R;
                     break;
                 case MUL: 			    // E -> E * E
-                    tmpRule = MUL_R;
+                    *rule = MUL_R;
                     break;
                 case MINUS: 		    // E -> E - E
-                    tmpRule = MINUS_R;
+                    *rule = MINUS_R;
                     break;
                 case DIV: 			    // E -> E / E
-                    tmpRule = DIV_R;
+                    *rule = DIV_R;
                     break;
                 case NILCOAL:           // E -> E ?? E
-                    tmpRule = NILCOAL_R;
+                    *rule = NILCOAL_R;
                     break;
                 case EQ: 		        // E -> E == E
-                    tmpRule = EQ_R;
+                    *rule = EQ_R;
                     break;
                 case NEQ: 		        // E -> E != E
-                    tmpRule = NEQ_R;
+                    *rule = NEQ_R;
                     break;
                 case GT: 		        // E -> E > E
-                    tmpRule = GT_R;
+                    *rule = GT_R;
                     break;
                 case GE: 			    // E -> E >= E
-                    tmpRule = GE_R;
+                    *rule = GE_R;
                     break;
                 case LT: 			    // E -> E < E
-                    tmpRule = LT_R;
+                    *rule = LT_R;
                     break;
                 case LE: 			    // E -> E <= E
-                    tmpRule = LE_R;
+                    *rule = LE_R;
                     break;
                 default:
                     return SYNTAX_ERROR;
@@ -239,12 +244,7 @@ int get_rule(prec_rules_t *rule, int symbsCnt) {
     } else {
         return SYNTAX_ERROR;
     }
-    *rule = tmpRule;
     return NO_ERRORS;
-}
-
-int types_are_equal(datatype_t first, datatype_t second) {
-    return (first.type == second.type) && (first.nullable == second.nullable);
 }
 
 int compatibility(prec_rules_t rule, prec_stack_item_t *first, prec_stack_item_t *second) {
@@ -254,7 +254,7 @@ int compatibility(prec_rules_t rule, prec_stack_item_t *first, prec_stack_item_t
             if (first->type.type == STRING_DT || second->type.type == STRING_DT) return SEMANTIC_TYPE_COMP_ERROR;
         }
         if (rule == PLUS_R) {
-            if (types_are_equal(first->type, second->type)) {
+            if (compare_datatypes(first->type, second->type)) {
                 return NO_ERRORS;
             }
             if (first->type.type == STRING_DT || second->type.type == STRING_DT) {
@@ -271,7 +271,7 @@ datatype_t determine_result_type(prec_rules_t rule, prec_stack_item_t *first, pr
     if (rule == PLUS_R || rule == MUL_R || rule == MINUS_R || rule == DIV_R) {
         // single type for whole expression
         // we're here only in case if one or both operands are either Int or Double type
-        if (types_are_equal(first->type, second->type)) final = first->type;
+        if (compare_datatypes(first->type, second->type)) final = first->type;
         else {
             if (first->type.type == DOUBLE_DT) final = first->type;
             else if (second->type.type == DOUBLE_DT) final = second->type;
@@ -285,18 +285,18 @@ int reduce() {
     int cnt = 0;
     head = prec_stack_head(&stack);
     prec_stack_item_t *tmp = head;
-    while (head->symb != STOP) {
+    while (tmp->symb != STOP) {
         cnt++;
-        head = head->next;
+        tmp = tmp->next;
     }
-    head = prec_stack_head(&stack);
-    debug("yo");
 
     prec_rules_t rule;
     EXEC(get_rule(&rule, cnt));
 
     tmp = NULL;
     prec_stack_item_t *left, *right;
+
+    debug("rule %d", rule);
 
     switch (rule) {
         case ID_R:
@@ -310,8 +310,12 @@ int reduce() {
         case DIV_R:
             left = head->next->next;
             right = head;
+            debug("!!!!!! left: %s, right: %s", symbol_to_text(left->symb), symbol_to_text(right->symb));
             EXEC(compatibility(rule, left, right));
             determine_result_type(rule, left, right);
+            POP_N(4);
+            PUSH_SYMBOL(NONTERM, fill_none_datatype());
+            break;
         case NILCOAL_R:
             // a ?? b => a != nil ? a! : b
             // The expression b must match the type that’s stored inside a.
@@ -327,6 +331,7 @@ int reduce() {
 
     }
 
+    head = prec_stack_first_terminal(&stack);
     return NO_ERRORS;
 }
 
@@ -334,12 +339,15 @@ int equal() {
     if (symb == ID) return SEMANTIC_EXPR_ERROR;
     POP_N(2);
     PUSH_SYMBOL(NONTERM, fill_none_datatype());
-    head = prec_stack_head(&stack);
+    head = prec_stack_first_terminal(&stack);
 
     return NO_ERRORS;
 }
 
 int analyze_symbol() {
+    EXEC(get_symbol(&symb));
+    EXEC(get_data_type(&symbDt));
+
     char precedence = prec_table[head->symb][symb];
 
     switch (precedence) {
@@ -355,6 +363,15 @@ int analyze_symbol() {
         case 'e':
         default:
             return SYNTAX_ERROR;
+    }
+    return NO_ERRORS;
+}
+
+int finish_expr() {
+    while (!prec_stack_is_empty(&stack)) {
+        head = prec_stack_head(&stack);
+        debug_print_stack();
+        EXEC(reduce());
     }
     return NO_ERRORS;
 }
@@ -386,7 +403,8 @@ int parse_expression(int origin) {
 
     if (is_symbol_operator(symb)) return SEMANTIC_OTHER_ERROR;
 
-    if(symb == ID) PUSH_SYMBOL(symb, symbDt);
+    if(symb == ID) PUSH_STOP();
+    PUSH_SYMBOL(symb, symbDt);
 
     head = prec_stack_head(&stack);
 
@@ -394,16 +412,13 @@ int parse_expression(int origin) {
         GET_TOKEN_SKIP_EOL();
 
         if (end_of_expression()) {
-            while (!prec_stack_is_empty(&stack)) {
-                head = prec_stack_head(&stack);
-                EXEC(reduce());
-            }
+            EXEC(finish_expr());
             return NO_ERRORS;
         } else {
-            EXEC(get_symbol(&symb));
-            EXEC(get_data_type(&symbDt));
-            analyze_symbol();
+            EXEC(analyze_symbol());
         }
+
+        debug("prec_stack_is_empty: %s", prec_stack_is_empty(&stack) ? "true" : "false");
     }
 
     prec_stack_free(&stack);

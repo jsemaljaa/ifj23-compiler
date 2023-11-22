@@ -411,9 +411,6 @@ int get_token(token_t *token){
                     state = STATE_COMM_BLOCK_START;
                 }
                 break;
-
-
-
         }
 
     }

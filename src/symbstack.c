@@ -47,7 +47,6 @@ bool symbstack_pop(ht_stack_t *symbstack) {
 ht_item_t *symbstack_search(ht_stack_t *symbstack, string_t *key) {
     ht_stack_item_t *head;
     for (head = symbstack->head; head != NULL; head = head->next) {
-        debug("key is %s", key->s);
         ht_item_t *item = symt_search(head->table, key);
         if (item != NULL) return item;
     }

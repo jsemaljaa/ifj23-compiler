@@ -56,8 +56,8 @@ typedef enum prec_symbols {
     LT,     // <
     LE,     // <=
     EMPTY,  // stack is empty: dollar
-    NONTERM,
     STOP,    // reduce sign
+    NONTERM,
     ERR
 } prec_symbs_t;
 

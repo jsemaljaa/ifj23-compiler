@@ -14,8 +14,6 @@
 
 #include "parserhelpers.h"
 
-
-
 int parse();
 
 int expression();

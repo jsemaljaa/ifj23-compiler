@@ -4,7 +4,11 @@ func a(_ h: String, with f: Int) {}
 let q : String
 let b : Int
 
-i(q, 6)
+if eee {
+    i(q, 6)
+} else {
+    a(q, with: b)
+}
 
 func i(_ f: String, _ l: Int) {
     let c : String

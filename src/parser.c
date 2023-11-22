@@ -89,16 +89,15 @@ int statement_list() {
             EXEC(execute_calls());
         }
         keysCnt = 0;
-        debug("keyscnt: %d", keysCnt);
         return NO_ERRORS;
     }
-    debug("LEAVE!");
 
     if (token.type == TYPE_RBRACKET) {
         if (scope != 0) {
             if (inFunc) {
                 if (item->data.func->ret.type == NONE_DT || seenReturn) {
                     seenReturn = false;
+                    inFunc = false;
                     symbstack_pop(&localTables);
                     scope--;
 
@@ -106,14 +105,13 @@ int statement_list() {
 
                     return statement_list();
                 } else {
+                    debug("inFunc: %s", inFunc ? "true" : "false");
                     return SEMANTIC_EXPR_ERROR;
                 }
             } else if (inIf) {
                 inIf--;
                 symbstack_pop(&localTables);
                 scope--;
-
-                debug("Exit from if: scope %d, inIf %d", scope, inIf);
 
                 NEXT_NON_EOL(token.type, TYPE_KW);
                 RULE(expect_else());
@@ -136,6 +134,7 @@ int statement_list() {
             case K_FUNC:
                 if (scope == 0) {
                     RULE(func_def());
+                    debug("infunc false");
                 } else {
                     return SEMANTIC_DEF_ERROR;
                 }
@@ -163,6 +162,7 @@ int statement_list() {
     }
 
     return NO_ERRORS;
+//    return statement_list();
 }
 int func_def() {
     // check <func_header> first
@@ -204,6 +204,7 @@ int func_def() {
 
     inFunc = true;
     RULE(func_body());
+    inFunc = false;
 
     return NO_ERRORS;
 }
@@ -264,8 +265,6 @@ int parameter() {
     if (!str_cmp(&toCall, &tmpTokenId)) return SEMANTIC_OTHER_ERROR;
 
     EXEC(symt_add_func_param(item, &toCall, &tmpTokenId, tmp));
-
-    debug("tmptokenid: %s", tmpTokenId.s);
 
     htable *workingTable = localTables.head->table;
 
@@ -539,11 +538,12 @@ int expression(){
         // we have tmp variable var here where we will save a result type of expression
 
         // TODO: in parse expression work with EOL skips
+
         EXEC(parse_expression(0));
 
         // TODO: check if we can use statement 5 + 5 as expression
 
-        return SYNTAX_ERROR;
+//        return SYNTAX_ERROR;
     }
 
     return NO_ERRORS;
@@ -746,5 +746,6 @@ int parse() {
     str_clear(&tmpTokenId);
     symbstack_free(&localTables);
     debug("after cleaning");
+
     return code;
 }
