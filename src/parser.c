@@ -683,7 +683,7 @@ int if_statement() {
 
     inIf++;
     scope++;
-    ifNumber = inIf;
+    int ifNumber = inIf;
     EXEC(create_local_table());
     
     geneneratorIfElse1(ifNumber);  ////////////////////
