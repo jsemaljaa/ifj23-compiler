@@ -17,13 +17,22 @@ extern int code;
 
 extern token_t token;
 
+// Precedence stack
 prec_stack_t stack;
+
+// Variables to represent current token as precedence stack symbols
 prec_symbs_t symb;
+datatype_t symbDt;
+
+// Head of a precedence stack
 prec_stack_item_t *head;
 
-datatype_t symbDt;
-htable *workingTable;
+// Variable to help detect the end of an expression
 int from;
+
+// Flag used to determine, whether we should get next token in an expression
+// or no, because we still have to process current
+bool flag;
 
 void debug_print_stack() {
     debug("stack");
@@ -107,8 +116,10 @@ int get_data_type(datatype_t *datatype) {
     datatype->nullable = false;
     switch (token.type) {
         case TYPE_ID:
-            symbol = symt_search(workingTable, &token.attribute.id);
-            if (symbol == NULL || symbol->type == func) {
+            symbol = find_var_in_symtables(&token.attribute.id);
+            if (symbol == NULL) {
+                return SEMANTIC_UNDEF_VAR_ERROR;
+            } else if (symbol->type == func) {
                 return SEMANTIC_OTHER_ERROR;
             } else {
                 datatype = &symbol->data.var->type;
@@ -141,10 +152,12 @@ bool end_of_expression() {
         }
         bool isKeyword = token.type == TYPE_KW;
         end = isKeyword || isFunc;
-    } else if (from == 1) {// from if or while statement
+    } else if (from == 1 || from == 2) { // from if or while statement
         end = token.type == TYPE_LBRACKET ? true : false;
-    } else if (from == 2) { // from return statement
+    } else if (from == 3) { // from return statement
         end = token.type == TYPE_RBRACKET ? true : false;
+    } else {
+        end = false;
     }
 
     bool isEOF = token.type == TYPE_EOF;
@@ -172,9 +185,10 @@ int shift() {
     if (symb == ID) PUSH_STOP();
 
     if (head->symb == NONTERM) { // if head is nonterm, pop and push stop sign and then nonterm back
+        datatype_t tmp = head->type;
         POP_N(1);
         PUSH_STOP();
-        PUSH_SYMBOL(NONTERM, fill_none_datatype());
+        PUSH_SYMBOL(NONTERM, tmp);
     } else if (head->symb == LPAR && is_symbol_operator(symb)) { // if top is ) and symb is operator
         return SYNTAX_ERROR;
     }
@@ -191,6 +205,7 @@ int get_rule(prec_rules_t *rule, int symbsCnt) {
     prec_stack_item_t *second = head->next;
 
     if (symbsCnt == 1) {
+        // TODO: not sure if other cases besides symb == ID are needed
         if (first->symb == ID || first->type.type == INTEGER_DT || first->type.type == DOUBLE_DT || first->type.type == STRING_DT) {
             *rule = ID_R;
         } else {
@@ -199,6 +214,8 @@ int get_rule(prec_rules_t *rule, int symbsCnt) {
     } else if (symbsCnt == 2) {
         if (first->symb == NONTERM && second->symb == EXCL) {
             *rule = EXCL_R;
+        } else {
+            return SYNTAX_ERROR;
         }
     } else if (symbsCnt == 3) {
         prec_stack_item_t *third = head->next->next;
@@ -248,30 +265,47 @@ int get_rule(prec_rules_t *rule, int symbsCnt) {
 }
 
 int compatibility(prec_rules_t rule, prec_stack_item_t *first, prec_stack_item_t *second) {
-    if (rule == PLUS_R || rule == MUL_R || rule == MINUS_R || rule == DIV_R) {
-        if (rule != PLUS_R) {
-            // *, - and / can't operate with datatype string
-            if (first->type.type == STRING_DT || second->type.type == STRING_DT) return SEMANTIC_TYPE_COMP_ERROR;
-        }
-        if (rule == PLUS_R) {
-            if (compare_datatypes(first->type, second->type)) {
-                return NO_ERRORS;
-            }
-            if (first->type.type == STRING_DT || second->type.type == STRING_DT) {
-                return SEMANTIC_TYPE_COMP_ERROR;
-            }
+
+    // Pro operátor == platí: Pokud je první operand jiného typu než druhý operand, dochází k chybě 7.
+
+    if (rule == PLUS_R) {
+        if (compare_datatypes(first->type, second->type)) {
+            return NO_ERRORS;
         }
     }
+
+    switch (rule) {
+        case PLUS_R:
+        case MUL_R:
+        case MINUS_R:
+        case DIV_R:
+            // *, - and / can't operate with datatype string
+            if (first->type.type == STRING_DT || second->type.type == STRING_DT) return SEMANTIC_TYPE_COMP_ERROR;
+            break;
+        case EQ_R:
+        case NEQ_R:
+        case GT_R:
+        case GE_R:
+        case LT_R:
+        case LE_R:
+            if (!compare_datatypes(first->type, second->type)) return SEMANTIC_TYPE_COMP_ERROR;
+        default:
+            break;
+    }
+
     return NO_ERRORS;
 }
 
 datatype_t determine_result_type(prec_rules_t rule, prec_stack_item_t *first, prec_stack_item_t *second) {
+
     datatype_t final;
 
     if (rule == PLUS_R || rule == MUL_R || rule == MINUS_R || rule == DIV_R) {
         // single type for whole expression
         // we're here only in case if one or both operands are either Int or Double type
-        if (compare_datatypes(first->type, second->type)) final = first->type;
+        if (compare_datatypes(first->type, second->type)) {
+            final = first->type;
+        }
         else {
             if (first->type.type == DOUBLE_DT) final = first->type;
             else if (second->type.type == DOUBLE_DT) final = second->type;
@@ -293,42 +327,40 @@ int reduce() {
     prec_rules_t rule;
     EXEC(get_rule(&rule, cnt));
 
+    datatype_t tmpDT;
     tmp = NULL;
     prec_stack_item_t *left, *right;
-
-    debug("rule %d", rule);
 
     switch (rule) {
         case ID_R:
             tmp = prec_stack_head(&stack);
+            tmpDT = tmp->type;
             POP_N(2);
-            PUSH_SYMBOL(NONTERM, tmp->type);
+            PUSH_SYMBOL(NONTERM, tmpDT);
             break;
         case PLUS_R:
         case MUL_R:
         case MINUS_R:
         case DIV_R:
-            left = head->next->next;
-            right = head;
-            debug("!!!!!! left: %s, right: %s", symbol_to_text(left->symb), symbol_to_text(right->symb));
-            EXEC(compatibility(rule, left, right));
-            determine_result_type(rule, left, right);
-            POP_N(4);
-            PUSH_SYMBOL(NONTERM, fill_none_datatype());
-            break;
-        case NILCOAL_R:
-            // a ?? b => a != nil ? a! : b
-            // The expression b must match the type that’s stored inside a.
-        case EXCL_R:
         case EQ_R:
         case NEQ_R:
         case GE_R:
         case GT_R:
         case LE_R:
         case LT_R:
+            left = head->next->next;
+            right = head;
+            EXEC(compatibility(rule, left, right));
+            tmpDT = determine_result_type(rule, left, right);
+            POP_N(4);
+            PUSH_SYMBOL(NONTERM, tmpDT);
+            break;
+        case NILCOAL_R:
+            // a ?? b => a != nil ? a! : b
+            // The expression b must match the type that’s stored inside a.
+        case EXCL_R:
         default:
             break;
-
     }
 
     head = prec_stack_first_terminal(&stack);
@@ -353,12 +385,15 @@ int analyze_symbol() {
     switch (precedence) {
         case '<': // shift
             EXEC(shift());
+            flag = false;
             break;
         case '>': // reduce
             EXEC(reduce());
+            flag = true;
             break;
         case '=':
             EXEC(equal());
+            flag = false;
             break;
         case 'e':
         default:
@@ -367,60 +402,68 @@ int analyze_symbol() {
     return NO_ERRORS;
 }
 
-int finish_expr() {
+int finish_expr(datatype_t *resultDT) {
+    // input is empty
     while (!prec_stack_is_empty(&stack)) {
         head = prec_stack_head(&stack);
-        debug_print_stack();
+//        debug_print_stack();
         EXEC(reduce());
     }
+
+    // stack is empty implemented so at the head of the stack will always be resulting NONTERM
+    // which also contains resulting datatype
+
+    head = prec_stack_head(&stack);
+    *resultDT = head->type;
+
+    prec_stack_free(&stack);
     return NO_ERRORS;
 }
 
-int parse_expression(int origin) {
+int parse_expression(int origin, datatype_t *resultDT) {
     // here token type is either IF, WHILE or =
 
-    // origin = 0 if from expression, end of expression is the start of next one
-    // origin = 1 if from statement if or while, end of expression is { token
-    // origin = 2 from return statement
+    // logic: end of every (besides if and while) expression is the start of next one (or EOF)
+    // origin = 0 from expression, end of expression is the start of next one
+    // origin = 1 from statement while, end of expression is { token
+    // origin = 2 from statement if, end of expression is { token
+    // origin = 3 from return statement
 
     from = origin;
 
-    // from if: current token is the very next one after keyword "if"
-    // from while: same as for if
+    // from expression or return (origin = 0): end of expression is the start of next one
+    // from while (origin = 1): current token is the very next one after keyword "while"
+    // from if (origin = 2): current token is the token after keyword
+    //                       first token of an expression if we're here
 
-    // logic: end of every expression is the start of next one (or EOF)
-
-    // find working table
-    workingTable = scope == 0 ? &gTable : localTables.head->table;
 
     prec_stack_init(&stack);
     PUSH_SYMBOL(EMPTY, fill_none_datatype());
 
-    GET_TOKEN_SKIP_EOL(); // get first token
+    if (from != 2) GET_TOKEN_SKIP_EOL(); // get first token
     if (end_of_expression()) return SYNTAX_ERROR;
     EXEC(get_symbol(&symb));
     EXEC(get_data_type(&symbDt));
 
-    if (is_symbol_operator(symb)) return SEMANTIC_OTHER_ERROR;
+    if (is_symbol_operator(symb) || symb == RPAR) return SEMANTIC_OTHER_ERROR;
 
-    if(symb == ID) PUSH_STOP();
+    if(symb == ID || symb == LPAR) {
+        PUSH_STOP();
+    }
     PUSH_SYMBOL(symb, symbDt);
 
     head = prec_stack_head(&stack);
 
-    while (!prec_stack_is_empty(&stack)) {
-        GET_TOKEN_SKIP_EOL();
+    while (true) {
+        if (!flag) {
+            GET_TOKEN_SKIP_EOL();
+        }
 
         if (end_of_expression()) {
-            EXEC(finish_expr());
+            EXEC(finish_expr(resultDT));
             return NO_ERRORS;
         } else {
             EXEC(analyze_symbol());
         }
-
-        debug("prec_stack_is_empty: %s", prec_stack_is_empty(&stack) ? "true" : "false");
     }
-
-    prec_stack_free(&stack);
-    return NO_ERRORS;
 }

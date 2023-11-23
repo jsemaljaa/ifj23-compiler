@@ -66,7 +66,7 @@ typedef enum prec_symbols {
 typedef enum prec_rules {
     NOT_RULE,		// 0. rule doesn't exist
     ID_R,           // 1. E -> id
-    BRACKETS_R, 	// 2. E -> (E)
+    PAR_R, 	        // 2. E -> (E)
     PLUS_R, 		// 3. E -> E + E
     MUL_R,		    // 4. E -> E * E
     MINUS_R, 	    // 5. E -> E - E

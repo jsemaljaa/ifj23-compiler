@@ -14,6 +14,9 @@
 int hexCnt = 0;
 int commCnt = 0;
 
+int multiline = 0;
+bool endOfLine = false;
+
 bool metExcl;
 
 states_t state;
@@ -272,8 +275,26 @@ int get_token(token_t *token){
                 break;
 
             case STATE_STRING_MULTILINE_READ:
-
+                // here we are already inside of a multiline string """
+                // in multiline read we're always only at the beginning of the multiline string
+//                if (c == '"') {
+//                    multiline++; // first "
+//                    EXEC_STR(str_append(&token->attribute.string, c));
+//                    state = STATE_STRING_MULTILINE_READ_MORE;
+//                } else {
+//                    EXEC_STR(str_append(&token->attribute.string, c));
+//                }
+                // multiline
                 break;
+
+//            case STATE_STRING_MULTILINE_READ_MORE:
+//                if (c == '"') {
+//                    multiline++;
+//                    EXEC_STR(str_append(&token->attribute.string, c));
+//                } else {
+//                    multiline = 0;
+//                    EXEC_STR(str_append(&token->attribute.string, c));
+//                }
 
             case STATE_STRING_MULTILINE_END:
                 break;
@@ -304,13 +325,13 @@ int get_token(token_t *token){
                     hexCnt = 0;
                     state = STATE_STRING_START;
                 } else if ((c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f') || (c >= '0' && c <= '9')) {
+                    hexCnt++;
                     if (hexCnt > 8) {
                         return LEXICAL_ERROR;
                     }
                     EXEC_STR(str_append(&token->attribute.string, c));
-                    hexCnt++;
                     // counter so max 8 symbols are appended to the string
-                }
+                } else return LEXICAL_ERROR;
                 break;
 
             case STATE_NUMBER_INTEGER:
@@ -354,9 +375,13 @@ int get_token(token_t *token){
                 if (c == '+' || c == '-') {
                     EXEC_STR(str_append(&token->attribute.string, c));
                     state = STATE_NUMBER_EXP_SIGN;
+                } else if (isdigit(c)) {
+                    EXEC_STR(str_append(&token->attribute.string, c));
+                    state = STATE_NUMBER_EXP_END;
                 } else {
                     return LEXICAL_ERROR;
                 }
+
                 break;
 
             case STATE_NUMBER_EXP_SIGN:
@@ -396,6 +421,8 @@ int get_token(token_t *token){
             case STATE_COMM_BLOCK_START: // /*
                 if (c == '*') {
                     state = STATE_COMM_BLOCK_END;
+                } else if (c == EOF) {
+                    return LEXICAL_ERROR;
                 }
                 break;
 
@@ -407,6 +434,8 @@ int get_token(token_t *token){
                     } else {
                         state = STATE_COMM_BLOCK_START;
                     }
+                } else if (c == EOF) {
+                    return LEXICAL_ERROR;
                 } else {
                     state = STATE_COMM_BLOCK_START;
                 }

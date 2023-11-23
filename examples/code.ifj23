@@ -4,18 +4,18 @@ func a(_ h: String, with f: Int) {}
 let q : String
 let b : Int
 
-if eee {
-    i(q, 6)
-} else {
+while b {
     a(q, with: b)
 }
+
 
 func i(_ f: String, _ l: Int) {
     let c : String
     let d : Int
-    a(q, with: b)
+    a(q, with: d)
 }
 
+// var A : Int = 5 + 3
 
 /*
 length("5")

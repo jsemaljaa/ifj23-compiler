@@ -61,7 +61,7 @@ int reduce();
 int get_symbol(prec_symbs_t *symb);
 
 // The main function, where precedence rules must be found.
-int parse_expression(int origin);
+int parse_expression(int origin, datatype_t *resultDT);
 
 int analyze_symbol();
 

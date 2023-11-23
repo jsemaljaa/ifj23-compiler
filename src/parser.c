@@ -18,24 +18,28 @@ ht_stack_t localTables;
 int scope = 0;
 bool inFunc = false;
 bool inElse = false;
+
+// Variables to support multiple if and while statements
 int inIf = 0;
+int inWhile = 0;
+
 // Current token from scanner
 token_t token;
+
+// Variable to check if we've seen a return statement from a function or no
 bool seenReturn = false;
+
+// Return code with error in case of any, otherwise has NO_ERRORS
 int code;
+
 // Temp variable for current htable item
 ht_item_t *item;
 // Temp variable for token attr id
 string_t tmpTokenId;
 
-// Temp variable to check if function were defined after they were called
+// Temp variables to check if function were defined after they were called
 string_t *funcKeys;
 int keysCnt;
-
-int while_statement() {
-    // TODO
-    return NO_ERRORS;
-}
 
 int execute_calls() {
     // here item contains a call we have to execute and check call parameters
@@ -68,12 +72,11 @@ int execute_calls() {
     return NO_ERRORS;
 }
 
-// <statement_list> ::= <statement> <statement_list>
 int statement_list() {
     SKIP_EOL();
 
     if (token.type == TYPE_EOF) {
-        if (scope != 0 || inIf) {
+        if (scope != 0 || inIf || inWhile) {
             // if function body, if or while body never reached } token
             return SYNTAX_ERROR;
         }
@@ -105,7 +108,6 @@ int statement_list() {
 
                     return statement_list();
                 } else {
-                    debug("inFunc: %s", inFunc ? "true" : "false");
                     return SEMANTIC_EXPR_ERROR;
                 }
             } else if (inIf) {
@@ -121,7 +123,17 @@ int statement_list() {
                 symbstack_pop(&localTables);
                 scope--;
 
-                GET_TOKEN();
+                inElse = false;
+
+                GET_TOKEN_SKIP_EOL();
+
+                return NO_ERRORS;
+            } else if (inWhile) {
+                inWhile--;
+                symbstack_pop(&localTables);
+                scope--;
+
+                GET_TOKEN_SKIP_EOL();
 
                 return NO_ERRORS;
             }
@@ -134,7 +146,6 @@ int statement_list() {
             case K_FUNC:
                 if (scope == 0) {
                     RULE(func_def());
-                    debug("infunc false");
                 } else {
                     return SEMANTIC_DEF_ERROR;
                 }
@@ -161,9 +172,26 @@ int statement_list() {
         }
     }
 
-    return NO_ERRORS;
-//    return statement_list();
+    return statement_list();
 }
+
+int while_statement() {
+    // token while here
+    // TODO: connect expressions, for now just skip until { is found
+
+    datatype_t resultDT;
+    EXEC(parse_expression(1, &resultDT));
+
+    inWhile++;
+    scope++;
+    EXEC(create_local_table());
+
+    GET_TOKEN_SKIP_EOL();
+    RULE(statement_list());
+
+    return NO_ERRORS;
+}
+
 int func_def() {
     // check <func_header> first
     // token here is keyword with value K_FUNC
@@ -250,6 +278,9 @@ int parameter() {
 
     } else if (token.type == TYPE_ID) { // second is ID to use inside a function
         EXEC(str_copy(&token.attribute.id, &tmpTokenId));
+        if (!str_cmp(&tmpTokenId, &toCall)) {
+            return SEMANTIC_OTHER_ERROR;
+        }
     } else {
         return SYNTAX_ERROR;
     }
@@ -334,7 +365,6 @@ int var_def() {
     var.type.type = NONE_DT;
     var.defined = false;
 
-    bool seenExpr = false;
 
     if (token.attribute.keyword == K_LET) {
         var.mutable = false;
@@ -371,16 +401,23 @@ int var_def() {
 
     if (token.type == TYPE_ASSIGN) {
         var.defined = true;
-//        EXEC(parse_expression(0));
-        seenExpr = true;
+        datatype_t expressionResult;
+        EXEC(parse_expression(0, &expressionResult));
+
+        if (var.type.type != NONE_DT) {
+            // if it's not none then we met declaration of datatype with `... : DATATYPE = ...`
+            if (!compare_datatypes(expressionResult, var.type)) {
+                return SEMANTIC_TYPE_ERROR;
+            }
+        } else {
+            var.type = expressionResult;
+        }
     }
 
-    if (!seenExpr) {
-        if (var.type.type == NONE_DT) {
-            return SYNTAX_ERROR;
-        } else if (var.type.nullable) {
-            debug("Init var %s with nil", tmpTokenId.s);
-        }
+    if (var.type.type == NONE_DT) {
+        return SYNTAX_ERROR;
+    } else if (var.type.nullable) {
+        debug("Init var %s with nil", tmpTokenId.s);
     }
 
     EXEC(symt_add_var(workingTable, &tmpTokenId, var.type));
@@ -538,8 +575,8 @@ int expression(){
         // we have tmp variable var here where we will save a result type of expression
 
         // TODO: in parse expression work with EOL skips
-
-        EXEC(parse_expression(0));
+//        datatype_t resultDT;
+//        EXEC(parse_expression(0, &resultDT));
 
         // TODO: check if we can use statement 5 + 5 as expression
 
@@ -549,8 +586,8 @@ int expression(){
     return NO_ERRORS;
 }
 
-//<call_parameters_list> ::= <call_parameter> <call_parameters_list_more> | ε
 int call_parameters_list() {
+    //<call_parameters_list> ::= <call_parameter> <call_parameters_list_more> | ε
     GET_TOKEN_SKIP_EOL();
 
     if (token.type == TYPE_RPAR) {
@@ -643,7 +680,6 @@ int call_parameter() {
     item->data.func->argPos++;
 
     // get next token (if no syntax error it should be , or ) token)
-//    GET_TOKEN_SKIP_EOL();
     RULE(call_parameters_list_more());
     return NO_ERRORS;
 }
@@ -694,14 +730,14 @@ int if_statement() {
             // get next non EOL token which has to be `id` for `let` statement
             NEXT_NON_EOL(token.type, TYPE_ID);
             // TODO: i guess save it to local symbtable, not sure
+
+            // next non-whitespace has to be {, otherwise syntax error
+            NEXT_NON_EOL(token.type, TYPE_LBRACKET);
         }
     } else {
         // check for empty expression
-        if (token.type == TYPE_LBRACKET) return SYNTAX_ERROR;
-        while (token.type != TYPE_LBRACKET) GET_TOKEN();
-
-        // EXEC(parse_expression(1));
-        // prec analysis should stop when there's token { found
+        datatype_t resultDT;
+        EXEC(parse_expression(2, &resultDT));
     }
 
     GET_TOKEN_SKIP_EOL();
@@ -740,7 +776,6 @@ int parse() {
 
     // Memory cleaning
 
-//    free_func_keys();
     symt_free(&gTable);
     str_clear(&token.attribute.id);
     str_clear(&tmpTokenId);

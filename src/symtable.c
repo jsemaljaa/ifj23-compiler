@@ -79,10 +79,12 @@ int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, symt
 
     item->data.func->argc++;
 
-    item->data.func->argv = (param_t *)realloc(item->data.func->argv, item->data.func->argc * sizeof(param_t));
-    if (item->data.func->argv == NULL) {
+    param_t *tmp = (param_t *)realloc(item->data.func->argv, item->data.func->argc * sizeof(param_t));
+
+    if (tmp == NULL) {
         return OTHER_ERROR;
     }
+    item->data.func->argv = tmp;
 
     int currArg = item->data.func->argc - 1;
 
