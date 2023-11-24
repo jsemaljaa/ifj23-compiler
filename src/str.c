@@ -22,7 +22,7 @@ bool str_realloc(string_t *str, const int len){
     return true;
 }
 
-int str_create(string_t *str, const int size){
+int str_create(string_t *str, const int size) {
     if ((str->s = calloc(size, sizeof(char))) == NULL)
         return OTHER_ERROR;
 

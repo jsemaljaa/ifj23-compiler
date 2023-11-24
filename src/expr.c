@@ -107,7 +107,6 @@ int get_symbol(prec_symbs_t *symbol) {
             return SYNTAX_ERROR;
     }
 
-    generatorStackPush(token);
 
     return NO_ERRORS;
 }
@@ -453,7 +452,6 @@ int parse_expression(int origin, datatype_t *resultDT) {
     if (from != 2) GET_TOKEN_SKIP_EOL(); // get first token
     if (end_of_expression()) return SYNTAX_ERROR;
 
-    generatorExpressionBegin();
 
     EXEC(get_symbol(&symb));
     EXEC(get_data_type(&symbDt));
@@ -474,7 +472,6 @@ int parse_expression(int origin, datatype_t *resultDT) {
 
         if (end_of_expression()) {
             EXEC(finish_expr(resultDT));
-            generatorExpressionEnd();
             return NO_ERRORS;
         } else {
             EXEC(analyze_symbol());

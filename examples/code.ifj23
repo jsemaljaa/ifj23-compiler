@@ -3,9 +3,13 @@ func a(_ h: String, with f: Int) {}
 let q : String
 let b : Int
 
-while b {
-    a(q, with: b)
-}
+if let a {
+    a = 5
+    while b {
+        a(q, with: b)
+    }
+} else {}
+
 
 func i(_ f: String, _ l: Int) {
     let c : String

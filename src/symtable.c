@@ -102,16 +102,24 @@ int symt_add_func_param(ht_item_t *item, string_t *toCall, string_t *toUse, symt
 int symt_add_func_call_param(ht_item_t *item, string_t *callId, string_t *id, symt_var_t attr) {
     int currCall = item->data.func->callsCnt - 1;
 
-    if (item->data.func->calls[currCall].argc == 0) {
-        // if first parameter in this call then init
-        item->data.func->calls[currCall].params = malloc(sizeof(param_t));
-    }
-
+//    if (item->data.func->calls[currCall].argc == 0) {
+//        // if first parameter in this call then init
+//        item->data.func->calls[currCall].params = (param_t *)malloc(sizeof(param_t));
+//        if (item->data.func->calls[currCall].params == NULL){
+//            return OTHER_ERROR;
+//        }
+//    }
 
     int currParam = item->data.func->calls[currCall].argc;
 
-    item->data.func->calls[currCall].params = realloc(item->data.func->calls[currCall].params, currParam + 1 * sizeof(param_t));
-    if (item->data.func->calls[currCall].params == NULL) return OTHER_ERROR;
+    if (currParam > 4) {
+        param_t *tmp = realloc(item->data.func->calls[currCall].params, (currParam + 1) * sizeof(param_t));
+        if (tmp == NULL) {
+            return OTHER_ERROR;
+        }
+        item->data.func->calls[currCall].params = tmp;
+    }
+
 
     EXEC_STR(str_create(&item->data.func->calls[currCall].params[currParam].id, STR_SIZE));
     EXEC_STR(str_create(&item->data.func->calls[currCall].params[currParam].callId, STR_SIZE));
@@ -135,12 +143,35 @@ int symt_add_func_call_param(ht_item_t *item, string_t *callId, string_t *id, sy
 }
 
 int symt_add_func_call(ht_item_t *item) {
+
     item->data.func->callsCnt++;
 
     int callsCnt = item->data.func->callsCnt;
 
-    item->data.func->calls = (parser_func_call_t *)realloc(item->data.func->calls, callsCnt * sizeof(parser_func_call_t));
-    if (item->data.func->calls == NULL) return OTHER_ERROR;
+    // TODO: by default allocating 3 calls for every function, might need to fix later
+
+    // if first call
+    if (callsCnt == 1) {
+        parser_func_call_t *tmp = (parser_func_call_t *)malloc(3 * sizeof(parser_func_call_t));
+        if (tmp == NULL) {
+            return OTHER_ERROR;
+        }
+        item->data.func->calls = tmp;
+    } else if (callsCnt > 2) {
+        parser_func_call_t *tmp = (parser_func_call_t *)realloc(item->data.func->calls, 3 * sizeof(parser_func_call_t));
+        if (tmp == NULL) {
+            return OTHER_ERROR;
+        }
+        item->data.func->calls = tmp;
+    }
+
+    // TODO: FIXME, allocating 5 parameters by default, might need to fix later
+
+    item->data.func->calls[callsCnt - 1].params = (param_t *)malloc(5 * sizeof(param_t));
+
+    if (item->data.func->calls[callsCnt - 1].params == NULL) {
+        return OTHER_ERROR;
+    }
 
     return NO_ERRORS;
 }

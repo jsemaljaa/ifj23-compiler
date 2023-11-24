@@ -17,6 +17,7 @@ ht_stack_t localTables;
 // Current scope, 0 for global
 int scope = 0;
 bool inFunc = false;
+ht_item_t *currFunc;
 bool inElse = false;
 
 // Variables to support multiple if and while statements
@@ -90,7 +91,6 @@ int statement_list() {
             item = symt_search(&gTable, &funcKeys[i]);
             if (!item->data.func->isDefined) return SEMANTIC_DEF_ERROR;
             EXEC(execute_calls());
-            generatorFuncCall(item);
         }
         keysCnt = 0;
         return NO_ERRORS;
@@ -99,7 +99,7 @@ int statement_list() {
     if (token.type == TYPE_RBRACKET) {
         if (scope != 0) {
             if (inFunc) {
-                if (item->data.func->ret.type == NONE_DT || seenReturn) {
+                if (currFunc->data.func->ret.type == NONE_DT || seenReturn) {
                     seenReturn = false;
                     inFunc = false;
                     symbstack_pop(&localTables);
@@ -111,15 +111,6 @@ int statement_list() {
                 } else {
                     return SEMANTIC_EXPR_ERROR;
                 }
-            } else if (inIf) {
-                inIf--;
-                symbstack_pop(&localTables);
-                scope--;
-
-                NEXT_NON_EOL(token.type, TYPE_KW);
-                RULE(expect_else());
-
-                return statement_list();
             } else if (inElse) {
                 symbstack_pop(&localTables);
                 scope--;
@@ -137,6 +128,15 @@ int statement_list() {
                 GET_TOKEN_SKIP_EOL();
 
                 return NO_ERRORS;
+            } else if (inIf) {
+                inIf--;
+                symbstack_pop(&localTables);
+                scope--;
+
+                NEXT_NON_EOL(token.type, TYPE_KW);
+                RULE(expect_else());
+
+                return statement_list();
             }
         } else return SYNTAX_ERROR;
     } else if (token.type == TYPE_ID) {
@@ -180,14 +180,8 @@ int while_statement() {
     // token while here
     // TODO: connect expressions, for now just skip until { is found
 
-    generatorWhileLoop1(inWhile); /////
-
-
     datatype_t resultDT;
     EXEC(parse_expression(1, &resultDT));
-
-    generatorWhileLoop2(inWhile); /////
-
 
     inWhile++;
     scope++;
@@ -195,9 +189,6 @@ int while_statement() {
 
     GET_TOKEN_SKIP_EOL();
     RULE(statement_list());
-
-    generatorWhileLoop3(inWhile); /////
-
 
     return NO_ERRORS;
 }
@@ -219,6 +210,8 @@ int func_def() {
         EXEC(symt_add_func(&gTable, &token.attribute.id));
         item = symt_search(&gTable, &token.attribute.id);
     }
+
+    currFunc = symt_search(&gTable, &token.attribute.id);
 
     string_t tmpFuncName;
     EXEC(str_create(&tmpFuncName, STR_SIZE));
@@ -247,14 +240,9 @@ int func_def() {
 
     inFunc = true;
 
-    // HEADER PROCESSED
-
-    generatorFuncDef1(item);
-
     RULE(func_body());
     inFunc = false;
 
-    generatorFuncDef2(tmpFuncName.s);
 
     return NO_ERRORS;
 }
@@ -555,7 +543,6 @@ int save_func_call() {
         return SYNTAX_ERROR;
     }
 
-
     EXEC(append_func_keys(item->key));
 
     GET_TOKEN_SKIP_EOL();
@@ -590,8 +577,6 @@ int expression(){
             } else {
                 RULE(call_parameters_list());
                 item->data.func->argPos = 0;
-                //// FUNC CALL PROCESSED
-                generatorFuncCall(item);
             }
         }
     } else if (token.type == TYPE_ASSIGN) {
@@ -599,16 +584,12 @@ int expression(){
         ht_item_t *var = find_var_in_symtables(&tmpTokenId);
         if (var == NULL) return SEMANTIC_UNDEF_VAR_ERROR;
 
-        // we have tmp variable var here where we will save a result type of expression
-
         // TODO: in parse expression work with EOL skips
         datatype_t resultDT;
         EXEC(parse_expression(0, &resultDT));
 
         // TODO: check if we can use statement 5 + 5 as expression
-
-//        return SYNTAX_ERROR;
-    }
+    } else return SYNTAX_ERROR;
 
     return NO_ERRORS;
 }
@@ -748,11 +729,9 @@ int if_statement() {
     // push new local symbtable to stack before we proceed with prec analysis
 
     inIf++;
-    int num = inIf;
     scope++;
     EXEC(create_local_table());
 
-    generatorIfElse1(num);
 
     if (token.type == TYPE_KW) {
         if (token.attribute.keyword != K_LET) return SYNTAX_ERROR;
@@ -780,7 +759,6 @@ int if_statement() {
 
     GET_TOKEN_SKIP_EOL();
     RULE(statement_list());
-    generatorIfElse3(num);
     return NO_ERRORS;
 }
 
@@ -790,7 +768,6 @@ int expect_else() {
     NEXT_NON_EOL(token.type, TYPE_LBRACKET);
 
     inElse = true;
-    generatorIfElse2(inIf);
 
     scope++;
     EXEC(create_local_table());
@@ -813,8 +790,6 @@ int parse() {
 
     // We are in the main body of a program
     code = statement_list();
-
-    printf("EXIT int@0\n");
 
     // Memory cleaning
 
