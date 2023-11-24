@@ -180,7 +180,7 @@ void free_func_keys() {
 }
 
 bool compare_datatypes(datatype_t required, datatype_t passed) {
-    return (required.type == passed.type) && (required.nullable == passed.nullable);
+    return (required.type == passed.type);
 }
 
 bool is_token_const(token_type_t type) {

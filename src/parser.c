@@ -90,6 +90,7 @@ int statement_list() {
             item = symt_search(&gTable, &funcKeys[i]);
             if (!item->data.func->isDefined) return SEMANTIC_DEF_ERROR;
             EXEC(execute_calls());
+            generatorFuncCall(item);
         }
         keysCnt = 0;
         return NO_ERRORS;
@@ -179,8 +180,14 @@ int while_statement() {
     // token while here
     // TODO: connect expressions, for now just skip until { is found
 
+    generatorWhileLoop1(inWhile); /////
+
+
     datatype_t resultDT;
     EXEC(parse_expression(1, &resultDT));
+
+    generatorWhileLoop2(inWhile); /////
+
 
     inWhile++;
     scope++;
@@ -188,6 +195,9 @@ int while_statement() {
 
     GET_TOKEN_SKIP_EOL();
     RULE(statement_list());
+
+    generatorWhileLoop3(inWhile); /////
+
 
     return NO_ERRORS;
 }
@@ -210,6 +220,11 @@ int func_def() {
         item = symt_search(&gTable, &token.attribute.id);
     }
 
+    string_t tmpFuncName;
+    EXEC(str_create(&tmpFuncName, STR_SIZE));
+
+    tmpFuncName = item->key;
+
     item->data.func->isDefined = true;
     // after this fork we will have function struct in item
     NEXT_NON_EOL(token.type, TYPE_LPAR);
@@ -231,8 +246,15 @@ int func_def() {
     } else return SYNTAX_ERROR;
 
     inFunc = true;
+
+    // HEADER PROCESSED
+
+    generatorFuncDef1(item);
+
     RULE(func_body());
     inFunc = false;
+
+    generatorFuncDef2(tmpFuncName.s);
 
     return NO_ERRORS;
 }
@@ -377,16 +399,19 @@ int var_def() {
     ht_item_t *varItem;
     htable *workingTable;
 
+
     if (scope != 0) {
-        varItem = symbstack_search(&localTables, &token.attribute.id);
         workingTable = localTables.head->table;
+
+        // check if we're not trying to redefine a variable in the same scope
+        varItem = symt_search(workingTable, &token.attribute.id);
+        if (varItem != NULL) return SEMANTIC_DEF_ERROR;
+
+        varItem = symbstack_search(&localTables, &token.attribute.id);
     } else {
         varItem = symt_search(&gTable, &token.attribute.id);
+        if (varItem != NULL) return SEMANTIC_DEF_ERROR;
         workingTable = &gTable;
-    }
-
-    if (varItem != NULL) {
-        return SEMANTIC_DEF_ERROR;
     }
 
     EXEC(str_copy(&token.attribute.id, &tmpTokenId));
@@ -565,6 +590,8 @@ int expression(){
             } else {
                 RULE(call_parameters_list());
                 item->data.func->argPos = 0;
+                //// FUNC CALL PROCESSED
+                generatorFuncCall(item);
             }
         }
     } else if (token.type == TYPE_ASSIGN) {
@@ -575,8 +602,8 @@ int expression(){
         // we have tmp variable var here where we will save a result type of expression
 
         // TODO: in parse expression work with EOL skips
-//        datatype_t resultDT;
-//        EXEC(parse_expression(0, &resultDT));
+        datatype_t resultDT;
+        EXEC(parse_expression(0, &resultDT));
 
         // TODO: check if we can use statement 5 + 5 as expression
 
@@ -721,8 +748,11 @@ int if_statement() {
     // push new local symbtable to stack before we proceed with prec analysis
 
     inIf++;
+    int num = inIf;
     scope++;
     EXEC(create_local_table());
+
+    generatorIfElse1(num);
 
     if (token.type == TYPE_KW) {
         if (token.attribute.keyword != K_LET) return SYNTAX_ERROR;
@@ -730,6 +760,14 @@ int if_statement() {
             // get next non EOL token which has to be `id` for `let` statement
             NEXT_NON_EOL(token.type, TYPE_ID);
             // TODO: i guess save it to local symbtable, not sure
+            htable *workingTable = localTables.head->table;
+            datatype_t tmp;
+            tmp.type = NONE_DT;
+            tmp.nullable = false;
+            EXEC(symt_add_var(workingTable, &token.attribute.id, tmp));
+
+            ht_item_t *var = symt_search(workingTable, &token.attribute.id);
+            var->data.var->mutable = false;
 
             // next non-whitespace has to be {, otherwise syntax error
             NEXT_NON_EOL(token.type, TYPE_LBRACKET);
@@ -742,6 +780,7 @@ int if_statement() {
 
     GET_TOKEN_SKIP_EOL();
     RULE(statement_list());
+    generatorIfElse3(num);
     return NO_ERRORS;
 }
 
@@ -751,6 +790,7 @@ int expect_else() {
     NEXT_NON_EOL(token.type, TYPE_LBRACKET);
 
     inElse = true;
+    generatorIfElse2(inIf);
 
     scope++;
     EXEC(create_local_table());
@@ -773,6 +813,8 @@ int parse() {
 
     // We are in the main body of a program
     code = statement_list();
+
+    printf("EXIT int@0\n");
 
     // Memory cleaning
 

@@ -107,6 +107,8 @@ int get_symbol(prec_symbs_t *symbol) {
             return SYNTAX_ERROR;
     }
 
+    generatorStackPush(token);
+
     return NO_ERRORS;
 }
 
@@ -148,9 +150,17 @@ bool end_of_expression() {
         bool isFunc = false;
         if (token.type == TYPE_ID) {
             ht_item_t *it = symt_search(&gTable, &token.attribute.id);
-            if (it != NULL) isFunc = it->type == func ? true : false;
+            if (it != NULL) {
+                isFunc = it->type == func ? true : false;
+            }
         }
-        bool isKeyword = token.type == TYPE_KW;
+        bool isKeyword = false;
+        if (token.type == TYPE_KW) {
+            isKeyword = true;
+            if (token.attribute.keyword == K_NIL) {
+                isKeyword = false;
+            }
+        }
         end = isKeyword || isFunc;
     } else if (from == 1 || from == 2) { // from if or while statement
         end = token.type == TYPE_LBRACKET ? true : false;
@@ -442,6 +452,9 @@ int parse_expression(int origin, datatype_t *resultDT) {
 
     if (from != 2) GET_TOKEN_SKIP_EOL(); // get first token
     if (end_of_expression()) return SYNTAX_ERROR;
+
+    generatorExpressionBegin();
+
     EXEC(get_symbol(&symb));
     EXEC(get_data_type(&symbDt));
 
@@ -461,6 +474,7 @@ int parse_expression(int origin, datatype_t *resultDT) {
 
         if (end_of_expression()) {
             EXEC(finish_expr(resultDT));
+            generatorExpressionEnd();
             return NO_ERRORS;
         } else {
             EXEC(analyze_symbol());
